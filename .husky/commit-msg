@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo -e "\033[0;31m[Husky] \033[0mRunning commitlint..."
+npx commitlint --edit $1
+
+echo -e "\033[0;31m[Husky] \033[0mAdd emoji to your commit msg..."
+
+if [[ $(cat "$1") == "fix:"* ]]; then
+  sed -i '1 s/$/ 🐛/' $1
+fi
+if [[ $(cat "$1") == "feat:"* ]]; then
+  sed -i '1 s/$/ 🚀/' $1
+fi
+if [[ $(cat "$1") == "docs:"* ]]; then
+  sed -i '1 s/$/ 📝/' $1
+fi
+if [[ $(cat "$1") == "style:"* ]]; then
+  sed -i '1 s/$/ 🎨/' $1
+fi
+if [[ $(cat "$1") == "refactor:"* ]]; then
+  sed -i '1 s/$/ ♻️/' $1
+fi
+if [[ $(cat "$1") == "perf:"* ]]; then
+  sed -i '1 s/$/ ⚡️/' $1
+fi
+if [[ $(cat "$1") == "test:"* ]]; then
+  sed -i '1 s/$/ ✅/' $1
+fi
+if [[ $(cat "$1") == "build:"* ]]; then
+  sed -i '1 s/$/ 👷/' $1
+fi
+if [[ $(cat "$1") == "ci:"* ]]; then
+  sed -i '1 s/$/ 🟢/' $1
+fi
+if [[ $(cat "$1") == "chore:"* ]]; then
+  sed -i '1 s/$/ 🔧/' $1
+fi
+if [[ $(cat "$1") == "revert:"* ]]; then
+  sed -i '1 s/$/ ⏪/' $1
+fi
+
+echo -e "\033[0;34m→ \033[0m$(cat "$1")"

@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo -e "\033[0;31m[Husky] \033[0mRunning lint-staged..."
+npx lint-staged
