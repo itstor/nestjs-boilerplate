@@ -23,13 +23,11 @@ import {
 import { Response } from 'express';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
+import APIError from '@/common/exceptions/api-error.exception';
 import { Users } from '@/entities/users.entity';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import EmailTakenException from './exceptions/email-taken.exception';
-import UserNotFoundException from './exceptions/user-not-found.exception';
-import UsernameTakenException from './exceptions/username-taken.exception';
 import { UserService } from './user.service';
 
 @Controller({
@@ -60,7 +58,7 @@ export class UserController {
     const user = await this.userService.findOne({ id });
 
     if (!user) {
-      throw new UserNotFoundException();
+      throw APIError.fromCode('USER_NOT_FOUND');
     }
 
     return user;
@@ -84,9 +82,9 @@ export class UserController {
       if (error.name === 'EXISTS') {
         switch (error.message) {
           case 'username':
-            throw new UsernameTakenException();
+            throw APIError.fromCode('USERNAME_EXISTS');
           case 'email':
-            throw new EmailTakenException();
+            throw APIError.fromCode('USER_REGISTERED');
           default:
             throw new BadRequestException({ message: error.message });
         }
@@ -116,14 +114,14 @@ export class UserController {
       if (error.name === 'EXISTS') {
         switch (error.message) {
           case 'username':
-            throw new UsernameTakenException();
+            throw APIError.fromCode('USERNAME_EXISTS');
           case 'email':
-            throw new EmailTakenException();
+            throw APIError.fromCode('USER_REGISTERED');
           default:
             throw new BadRequestException({ message: error.message });
         }
       } else if (error.name === 'NOT_FOUND') {
-        throw new UserNotFoundException();
+        throw APIError.fromCode('USER_NOT_FOUND');
       }
 
       throw new InternalServerErrorException({ message: error.message });
@@ -147,7 +145,7 @@ export class UserController {
       const error = result._unsafeUnwrapErr();
 
       if (error.name === 'NOT_FOUND') {
-        throw new UserNotFoundException();
+        throw APIError.fromCode('USER_NOT_FOUND');
       }
 
       throw new InternalServerErrorException({ message: error.message });
@@ -171,7 +169,7 @@ export class UserController {
     const result = await this.userService.findOne({ username });
 
     if (result) {
-      throw new UsernameTakenException();
+      throw APIError.fromCode('USERNAME_EXISTS');
     }
 
     res.sendStatus(HttpStatus.OK);
@@ -192,7 +190,7 @@ export class UserController {
     const result = await this.userService.findOne({ email });
 
     if (result) {
-      throw new EmailTakenException();
+      throw APIError.fromCode('USER_REGISTERED');
     }
 
     res.sendStatus(HttpStatus.OK);
