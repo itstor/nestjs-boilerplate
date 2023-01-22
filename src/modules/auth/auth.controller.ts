@@ -17,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 
+import { ApiErrorCode } from '@/common/constants/api-error-code.constant';
 import APIError from '@/common/exceptions/api-error.exception';
 
 import { AuthService } from './auth.service';
@@ -48,9 +49,9 @@ export class AuthController {
 
       switch (error.message) {
         case 'USER_NOT_FOUND':
-          throw APIError.fromCode('USER_NOT_FOUND');
+          throw APIError.fromMessage(ApiErrorCode.USER_NOT_FOUND);
         case 'WRONG_PASSWORD':
-          throw APIError.fromCode('WRONG_PASSWORD');
+          throw APIError.fromMessage(ApiErrorCode.WRONG_PASSWORD);
         default:
           throw new InternalServerErrorException();
       }
@@ -86,7 +87,7 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromCode('NOT_LOGGED');
+      throw APIError.fromMessage(ApiErrorCode.NOT_LOGGED);
     }
 
     await this.authService.logout(token);
@@ -117,9 +118,9 @@ export class AuthController {
 
       switch (error.message) {
         case 'USER_EXISTS':
-          throw APIError.fromCode('USER_EXISTS');
+          throw APIError.fromMessage(ApiErrorCode.USER_REGISTERED);
         case 'USERNAME_EXISTS':
-          throw APIError.fromCode('USERNAME_EXISTS');
+          throw APIError.fromMessage(ApiErrorCode.USERNAME_EXISTS);
         default:
           throw new InternalServerErrorException();
       }
@@ -155,13 +156,13 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromCode('NOT_LOGGED');
+      throw APIError.fromMessage(ApiErrorCode.NOT_LOGGED);
     }
 
     const result = await this.authService.refresh(token);
 
     if (result.isErr()) {
-      throw APIError.fromCode('TOKEN_EXPIRED');
+      throw APIError.fromMessage(ApiErrorCode.TOKEN_EXPIRED);
     }
 
     const accessToken = result._unsafeUnwrap();
@@ -174,6 +175,7 @@ export class AuthController {
     };
   }
 
+  // TODO - add JWT Guard
   @Get('logout/devices')
   @ApiOperation({ operationId: 'Logout User from all devices' })
   @ApiOkResponse({
@@ -189,7 +191,7 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromCode('NOT_LOGGED');
+      throw APIError.fromMessage(ApiErrorCode.NOT_LOGGED);
     }
 
     await this.authService.logoutFromAllDevices(token);

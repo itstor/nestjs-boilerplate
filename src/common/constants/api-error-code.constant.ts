@@ -14,7 +14,22 @@ export const ApiErrorCode = {
   },
   TOKEN_EXPIRED: {
     code: 'TOKEN_EXPIRED',
-    message: 'Token expired',
+    message: 'Your token has expired, please login again',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
+  TOKEN_INVALID: {
+    code: 'TOKEN_INVALID',
+    message: 'Your token is invalid, please login again',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
+  TOKEN_REVOKED: {
+    code: 'TOKEN_REVOKED',
+    message: 'Your token has been revoked, please login again',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
+  TOKEN_NOT_FOUND_REQ: {
+    code: 'TOKEN_NOT_FOUND',
+    message: 'Token not found in your request',
     httpCode: HttpStatus.UNAUTHORIZED,
   },
   USER_REGISTERED: {
@@ -37,14 +52,9 @@ export const ApiErrorCode = {
     message: 'User not found',
     httpCode: HttpStatus.NOT_FOUND,
   },
-  USER_EXISTS: {
-    code: 'USER_EXISTS',
-    message: 'User already exists',
-    httpCode: HttpStatus.CONFLICT,
-  },
   USERNAME_EXISTS: {
     code: 'USERNAME_EXISTS',
     message: 'Username already exists',
     httpCode: HttpStatus.CONFLICT,
   },
-} satisfies Record<string, IApiErrorMessage>;
+} as const satisfies Record<string, IApiErrorMessage>;
