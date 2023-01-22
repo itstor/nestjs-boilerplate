@@ -1,1 +1,1 @@
-# NestJS Prisma Starter
+# NestJS Starter
