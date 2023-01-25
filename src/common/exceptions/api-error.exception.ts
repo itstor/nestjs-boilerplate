@@ -1,9 +1,9 @@
 import { HttpException } from '@nestjs/common';
 
 import {
-  ApiErrorCode,
+  ApiErrorMessage,
   IApiErrorMessage,
-} from '../constants/api-error-code.constant';
+} from '../constants/api-error-message.constant';
 
 export interface IAPIError {
   code: string;
@@ -15,8 +15,8 @@ export default class APIError extends HttpException {
     super(response, status);
   }
 
-  public static fromCode(errorCode: keyof typeof ApiErrorCode) {
-    const { code, message, httpCode } = ApiErrorCode[errorCode];
+  public static fromCode(errorCode: keyof typeof ApiErrorMessage) {
+    const { code, message, httpCode } = ApiErrorMessage[errorCode];
 
     return new APIError({ code, message }, httpCode);
   }

@@ -17,6 +17,7 @@ export async function setupSwagger(app: INestApplication, path: string) {
     )
     .addServer(`http://localhost:8080`, 'Local Server')
     .setVersion('1.0')
+    .addBearerAuth(undefined, 'Access Token')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   await RedocModule.setup(path, app, document, redocOptions);

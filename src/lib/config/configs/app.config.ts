@@ -1,16 +1,18 @@
 import { registerAs } from '@nestjs/config';
 import * as Joi from 'joi';
 
-import JoiEnvConfig, { JoiConfig } from '@/common/helpers/joi-env.utils';
+import { ConfigName } from '@/common/constants/config-name.constant';
+import JoiEnvValidator, { JoiConfig } from '@/common/helpers/joi-env.utils';
 
 export interface IAppEnvConfig {
   environment: 'development' | 'production';
   isProduction: boolean;
   port: number;
   swaggerEnabled: boolean;
+  version: string;
 }
 
-export default registerAs('app-env', (): IAppEnvConfig => {
+export default registerAs(ConfigName.APP, (): IAppEnvConfig => {
   const config: JoiConfig<IAppEnvConfig> = {
     environment: {
       value: process.env.NODE_ENV,
@@ -28,7 +30,11 @@ export default registerAs('app-env', (): IAppEnvConfig => {
       value: process.env.SWAGGER_ENABLED === 'true',
       joi: Joi.boolean().required(),
     },
+    version: {
+      value: process.env.npm_package_version,
+      joi: Joi.string().required(),
+    },
   };
 
-  return JoiEnvConfig.validate(config);
+  return JoiEnvValidator.validate(config);
 });

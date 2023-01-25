@@ -7,6 +7,7 @@ import { pick } from 'lodash';
 import { err, ok, Result } from 'neverthrow';
 import { FindOptionsWhere, Repository } from 'typeorm';
 
+import { ConfigName } from '@/common/constants/config-name.constant';
 import { ServiceException } from '@/common/exceptions/service.exception';
 import { RefreshTokens } from '@/entities/resfresh-tokens.entity';
 import { Users } from '@/entities/users.entity';
@@ -20,11 +21,11 @@ export class TokenService {
 
   constructor(
     @InjectRepository(RefreshTokens)
-    private readonly repository: Repository<RefreshTokens>,
+    private readonly tokenRepo: Repository<RefreshTokens>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {
-    this.jwtConfig = this.configService.get<IJWTConfig>('jwt-config');
+    this.jwtConfig = this.configService.get<IJWTConfig>(ConfigName.JWT);
   }
 
   private readonly BASE_OPTIONS: JwtSignOptions = {
@@ -45,8 +46,8 @@ export class TokenService {
     const now = dayjs();
     const expiresIn = now.add(ttl, 'days');
 
-    const { id } = await this.repository.save(
-      this.repository.create({
+    const { id } = await this.tokenRepo.save(
+      this.tokenRepo.create({
         user,
         expiresIn: expiresIn.date(),
       }),
@@ -113,7 +114,7 @@ export class TokenService {
 
     const decodedJwt = this.jwtService.decode(token) as Record<string, any>;
 
-    const tokenFromDB = await this.repository.findOne({
+    const tokenFromDB = await this.tokenRepo.findOne({
       where: {
         id: decodedJwt?.jti,
         user: {
@@ -147,7 +148,7 @@ export class TokenService {
       },
     };
 
-    return await this.repository.update(query, {
+    return await this.tokenRepo.update(query, {
       isRevoked: true,
     });
   }

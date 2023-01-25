@@ -9,7 +9,7 @@ import { Users } from '@/entities/users.entity';
 @Injectable()
 export class UserService extends CRUDService<Users> {
   constructor(
-    @InjectRepository(Users) protected readonly repository: Repository<Users>,
+    @InjectRepository(Users) protected readonly userRepo: Repository<Users>,
   ) {
     const paginationConfig: PaginateConfig<Users> = {
       sortableColumns: ['id', 'email', 'role', 'createdAt', 'updatedAt'],
@@ -19,6 +19,6 @@ export class UserService extends CRUDService<Users> {
       defaultSortBy: [['id', 'ASC']],
     };
 
-    super(repository, paginationConfig);
+    super(userRepo, paginationConfig);
   }
 }

@@ -9,14 +9,14 @@ interface ConfigProps {
 
 export type JoiConfig<T> = Record<keyof T, ConfigProps>;
 
-export default class JoiEnvConfig {
+export default class JoiEnvValidator {
   static validate<T>(config: JoiConfig<T>): T {
-    const schemaObj = JoiEnvConfig.extractByPropName(
+    const schemaObj = JoiEnvValidator.extractByPropName(
       config,
       'joi',
     ) as Joi.SchemaMap<T>;
     const schema = Joi.object(schemaObj);
-    const values = JoiEnvConfig.extractByPropName(config, 'value') as T;
+    const values = JoiEnvValidator.extractByPropName(config, 'value') as T;
 
     const { error } = schema.validate(values, { abortEarly: false });
     if (error) {

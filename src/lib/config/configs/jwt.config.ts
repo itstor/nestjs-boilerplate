@@ -1,7 +1,8 @@
 import { registerAs } from '@nestjs/config';
 import * as Joi from 'joi';
 
-import JoiEnvConfig, { JoiConfig } from '@/common/helpers/joi-env.utils';
+import { ConfigName } from '@/common/constants/config-name.constant';
+import JoiEnvValidator, { JoiConfig } from '@/common/helpers/joi-env.utils';
 
 export interface IJWTConfig {
   secret: string;
@@ -9,7 +10,7 @@ export interface IJWTConfig {
   refreshExpirationDays: number;
 }
 
-export default registerAs('jwt-config', (): IJWTConfig => {
+export default registerAs(ConfigName.JWT, (): IJWTConfig => {
   const config: JoiConfig<IJWTConfig> = {
     secret: {
       value: process.env.JWT_SECRET,
@@ -25,5 +26,5 @@ export default registerAs('jwt-config', (): IJWTConfig => {
     },
   };
 
-  return JoiEnvConfig.validate(config);
+  return JoiEnvValidator.validate(config);
 });

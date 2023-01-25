@@ -2,9 +2,10 @@ import { registerAs } from '@nestjs/config';
 import * as Joi from 'joi';
 import { DatabaseType } from 'typeorm';
 
-import JoiEnvConfig, { JoiConfig } from '@/common/helpers/joi-env.utils';
+import { ConfigName } from '@/common/constants/config-name.constant';
+import JoiEnvValidator, { JoiConfig } from '@/common/helpers/joi-env.utils';
 
-export interface IDBEnvConfig {
+export interface IDatabaseConfig {
   type: DatabaseType;
   host: string;
   port: number;
@@ -13,8 +14,8 @@ export interface IDBEnvConfig {
   name: string;
 }
 
-export default registerAs('db-config', (): IDBEnvConfig => {
-  const config: JoiConfig<IDBEnvConfig> = {
+export default registerAs(ConfigName.DB, (): IDatabaseConfig => {
+  const config: JoiConfig<IDatabaseConfig> = {
     type: {
       value: process.env.DB_TYPE as DatabaseType,
       joi: Joi.string().required(),
@@ -41,5 +42,5 @@ export default registerAs('db-config', (): IDBEnvConfig => {
     },
   };
 
-  return JoiEnvConfig.validate(config);
+  return JoiEnvValidator.validate(config);
 });

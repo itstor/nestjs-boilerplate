@@ -3,11 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { err, ok } from 'neverthrow';
 
+import { ConfigName } from '@/common/constants/config-name.constant';
 import { ServiceException } from '@/common/exceptions/service.exception';
 import { IJWTConfig } from '@/lib/config/configs/jwt.config';
 
 import { UserLoginDto } from './dto/user-login.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
+import { EmailService } from '../email/email.service';
 import { TokenService } from '../token/token.service';
 import { UserService } from '../user/user.service';
 
@@ -19,8 +21,9 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {
-    this.jwtConfig = this.configService.get<IJWTConfig>('jwt-config');
+    this.jwtConfig = this.configService.get<IJWTConfig>(ConfigName.JWT);
   }
 
   public async login(data: UserLoginDto) {
@@ -51,19 +54,15 @@ export class AuthService {
     });
   }
 
-  public async logout(token: string) {
-    return await this.tokenService.revokeToken(token);
-  }
-
-  public async logoutFromAllDevices(token: string) {
-    return await this.tokenService.revokeToken(token, true);
+  public async logout(token: string, allDevices = false) {
+    return await this.tokenService.revokeToken(token, allDevices);
   }
 
   public async register(data: UserRegisterDto) {
     const createdUser = await this.userService.create(data);
 
     if (createdUser.isErr()) {
-      const error = createdUser._unsafeUnwrapErr();
+      const error = createdUser.error;
 
       if (error.name === 'EXISTS') {
         switch (error.message) {
@@ -72,14 +71,14 @@ export class AuthService {
           case 'username':
             return err(new ServiceException('USERNAME_EXISTS'));
         }
-
-        return err(new ServiceException('UNKNOWN'));
       }
+
+      return err(new ServiceException('UNKNOWN'));
     }
 
-    const user = createdUser._unsafeUnwrap();
+    const user = createdUser.value;
 
-    // TODO: send email verification
+    await this.emailService.sendVerificationEmail(user);
 
     const refreshToken = await this.tokenService.generateRefreshToken(
       user,

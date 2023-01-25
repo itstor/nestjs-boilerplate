@@ -13,6 +13,7 @@ import * as favicon from 'serve-favicon';
 
 import { AppModule } from '@/app.module';
 
+import { ConfigName } from './common/constants/config-name.constant';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AppUtils } from './common/helpers/app.utils';
 import { setupSwagger } from './common/helpers/swagger.utils';
@@ -25,16 +26,14 @@ async function bootstrap() {
   });
 
   const configService = app.get(ConfigService);
-  const appConfig = configService.get<IAppEnvConfig>('app-env');
+  const appConfig = configService.get<IAppEnvConfig>(ConfigName.APP);
 
   AppUtils.killApp(app);
 
-  // Configure static assets and view engine
+  // Configure static assets
   app.useStaticAssets(path.join(__dirname, '..', 'public'), {
     prefix: '/static/',
   });
-  app.setBaseViewsDir(path.join(__dirname, '..', 'views'));
-  app.setViewEngine('hbs'); // hbs is handlebars
 
   // use pino logger
   app.useLogger(app.get(Logger));

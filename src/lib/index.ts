@@ -7,4 +7,6 @@ export * from './config/config.module';
 export * from './jwt/jwt.module';
 export * from './logger/logger.module';
 export * from './mailer/nodemailer.module';
+export * from './sentry/sentry.module';
+export * from './throttler/throttler-config.module';
 export * from './typeorm/typeorm.module';

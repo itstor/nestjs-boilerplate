@@ -4,6 +4,7 @@ import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import * as path from 'path';
 
+import { ConfigName } from '@/common/constants/config-name.constant';
 import { ISMTPConfig } from '@/lib/config/configs/smtp.config';
 
 @Module({
@@ -12,7 +13,7 @@ import { ISMTPConfig } from '@/lib/config/configs/smtp.config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const emailConfig = configService.get<ISMTPConfig>('smtp-config');
+        const emailConfig = configService.get<ISMTPConfig>(ConfigName.SMTP);
 
         return <MailerOptions>{
           transport: {
@@ -27,7 +28,13 @@ import { ISMTPConfig } from '@/lib/config/configs/smtp.config';
             from: `"${emailConfig?.fromName}" <${emailConfig?.from}>`,
           },
           template: {
-            dir: path.join(__dirname, '..', 'templates'),
+            dir: path.join(
+              process.cwd(),
+              'src',
+              'modules',
+              'email',
+              'templates',
+            ),
             adapter: new HandlebarsAdapter(),
             options: {
               strict: true,

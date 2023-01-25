@@ -3,8 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import * as path from 'path';
 
+import { ConfigName } from '@/common/constants/config-name.constant';
 import { IAppEnvConfig } from '@/lib/config/configs/app.config';
-import { IDBEnvConfig } from '@/lib/config/configs/db.config';
+import { IDatabaseConfig } from '@/lib/config/configs/db.config';
 
 @Module({
   imports: [
@@ -12,8 +13,8 @@ import { IDBEnvConfig } from '@/lib/config/configs/db.config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const dbConfig = configService.get<IDBEnvConfig>('db-config');
-        const appConfig = configService.get<IAppEnvConfig>('app-config');
+        const dbConfig = configService.get<IDatabaseConfig>(ConfigName.DB);
+        const appConfig = configService.get<IAppEnvConfig>(ConfigName.APP);
 
         return <TypeOrmModuleOptions>{
           type: 'sqlite',

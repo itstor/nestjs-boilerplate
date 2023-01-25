@@ -6,7 +6,6 @@ import {
   Get,
   Head,
   HttpStatus,
-  InternalServerErrorException,
   Param,
   Post,
   Put,
@@ -23,13 +22,16 @@ import {
 import { Response } from 'express';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
-import { ApiErrorCode } from '@/common/constants/api-error-code.constant';
+import { ApiErrorMessage } from '@/common/constants/api-error-message.constant';
+import { LoggedUser } from '@/common/decorators/logged-user.decorator';
+import { UseAuth } from '@/common/decorators/use-auth.decorator';
 import APIError from '@/common/exceptions/api-error.exception';
 import { Users } from '@/entities/users.entity';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
+import { EmailService } from '../email/email.service';
 
 @Controller({
   path: 'users',
@@ -37,7 +39,10 @@ import { UserService } from './user.service';
 })
 @ApiTags('Users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @Get()
   @ApiOperation({
@@ -59,7 +64,7 @@ export class UserController {
     const user = await this.userService.findOne({ id });
 
     if (!user) {
-      throw APIError.fromMessage(ApiErrorCode.USER_NOT_FOUND);
+      throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
     }
 
     return user;
@@ -78,23 +83,23 @@ export class UserController {
     const result = await this.userService.create(data);
 
     if (result.isErr()) {
-      const error = result._unsafeUnwrapErr();
+      const error = result.error;
 
       if (error.name === 'EXISTS') {
         switch (error.message) {
           case 'username':
-            throw APIError.fromMessage(ApiErrorCode.USERNAME_EXISTS);
+            throw APIError.fromMessage(ApiErrorMessage.USERNAME_EXISTS);
           case 'email':
-            throw APIError.fromMessage(ApiErrorCode.USER_REGISTERED);
+            throw APIError.fromMessage(ApiErrorMessage.USER_REGISTERED);
           default:
             throw new BadRequestException({ message: error.message });
         }
       }
 
-      throw new InternalServerErrorException({ message: error.message });
+      throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
     }
 
-    return result._unsafeUnwrap();
+    return result.value;
   }
 
   @Put(':id')
@@ -110,25 +115,25 @@ export class UserController {
     const result = await this.userService.update(id, data);
 
     if (result.isErr()) {
-      const error = result._unsafeUnwrapErr();
+      const error = result.error;
 
       if (error.name === 'EXISTS') {
         switch (error.message) {
           case 'username':
-            throw APIError.fromMessage(ApiErrorCode.USERNAME_EXISTS);
+            throw APIError.fromMessage(ApiErrorMessage.USERNAME_EXISTS);
           case 'email':
-            throw APIError.fromMessage(ApiErrorCode.USER_REGISTERED);
+            throw APIError.fromMessage(ApiErrorMessage.USER_REGISTERED);
           default:
             throw new BadRequestException({ message: error.message });
         }
       } else if (error.name === 'NOT_FOUND') {
-        throw APIError.fromMessage(ApiErrorCode.USER_NOT_FOUND);
+        throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
       }
 
-      throw new InternalServerErrorException({ message: error.message });
+      throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
     }
 
-    return result._unsafeUnwrap();
+    return result.value;
   }
 
   @Delete(':id')
@@ -143,13 +148,13 @@ export class UserController {
     const result = await this.userService.delete({ id });
 
     if (result.isErr()) {
-      const error = result._unsafeUnwrapErr();
+      const error = result.error;
 
       if (error.name === 'NOT_FOUND') {
-        throw APIError.fromMessage(ApiErrorCode.USER_NOT_FOUND);
+        throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
       }
 
-      throw new InternalServerErrorException({ message: error.message });
+      throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
     }
 
     res.sendStatus(HttpStatus.NO_CONTENT);
@@ -170,7 +175,7 @@ export class UserController {
     const result = await this.userService.findOne({ username });
 
     if (result) {
-      throw APIError.fromMessage(ApiErrorCode.USERNAME_EXISTS);
+      throw APIError.fromMessage(ApiErrorMessage.USERNAME_EXISTS);
     }
 
     res.sendStatus(HttpStatus.OK);
@@ -191,9 +196,27 @@ export class UserController {
     const result = await this.userService.findOne({ email });
 
     if (result) {
-      throw APIError.fromMessage(ApiErrorCode.USER_REGISTERED);
+      throw APIError.fromMessage(ApiErrorMessage.USER_REGISTERED);
     }
 
     res.sendStatus(HttpStatus.OK);
+  }
+
+  @UseAuth()
+  @Get('verify-email')
+  @ApiOperation({ operationId: 'Request Email Verification' })
+  @ApiOkResponse({
+    description: 'Return success message',
+  })
+  async verifyEmail(@LoggedUser() user: Users) {
+    const result = await this.emailService.sendVerificationEmail(user);
+
+    if (!result) {
+      throw APIError.fromMessage(ApiErrorMessage.EMAIL_NOT_SENT);
+    }
+
+    return {
+      message: 'Email sent',
+    };
   }
 }

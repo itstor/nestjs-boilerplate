@@ -6,7 +6,12 @@ export interface IApiErrorMessage {
   httpCode: HttpStatus;
 }
 
-export const ApiErrorCode = {
+export const ApiErrorMessage = {
+  INTERNAL_SERVER_ERROR: {
+    code: 'INTERNAL_SERVER_ERROR',
+    message: 'Something went wrong',
+    httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
   NOT_LOGGED: {
     code: 'NOT_LOGGED',
     message: 'You are not logged in',
@@ -56,5 +61,10 @@ export const ApiErrorCode = {
     code: 'USERNAME_EXISTS',
     message: 'Username already exists',
     httpCode: HttpStatus.CONFLICT,
+  },
+  EMAIL_NOT_SENT: {
+    code: 'EMAIL_NOT_SENT',
+    message: 'Cannot send email',
+    httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 } as const satisfies Record<string, IApiErrorMessage>;

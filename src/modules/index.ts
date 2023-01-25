@@ -5,4 +5,5 @@
 export * from './auth/auth.module';
 export * from './email/email.module';
 export * from './ping/ping.module';
+export * from './token/token.module';
 export * from './user/user.module';

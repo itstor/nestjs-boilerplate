@@ -4,15 +4,14 @@ import * as Joi from 'joi';
 import { ConfigName } from '@/common/constants/config-name.constant';
 import JoiEnvValidator, { JoiConfig } from '@/common/helpers/joi-env.utils';
 
-// TODO Delete???
-export interface IKeyConfig {
-  refreshSecretKey: string;
+export interface IBullConfig {
+  redis_url: string;
 }
 
-export default registerAs(ConfigName.KEY, (): IKeyConfig => {
-  const config: JoiConfig<IKeyConfig> = {
-    refreshSecretKey: {
-      value: process.env.REFRESH_SECRET_KEY,
+export default registerAs(ConfigName.BULL, (): IBullConfig => {
+  const config: JoiConfig<IBullConfig> = {
+    redis_url: {
+      value: process.env.BULL_REDIS_URL,
       joi: Joi.string().required(),
     },
   };

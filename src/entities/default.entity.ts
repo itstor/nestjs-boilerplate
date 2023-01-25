@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { nanoid } from 'nanoid';
 import {
   BaseEntity,
-  BeforeInsert,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -16,7 +15,7 @@ import {
 export abstract class DefaultEntity extends BaseEntity {
   @PrimaryColumn('varchar', { length: 21 })
   @ApiProperty()
-  id: string;
+  id: string = nanoid();
 
   @Column()
   @CreateDateColumn()
@@ -39,9 +38,4 @@ export abstract class DefaultEntity extends BaseEntity {
   @VersionColumn()
   @ApiProperty()
   _v: number;
-
-  @BeforeInsert()
-  async setId() {
-    this.id = nanoid();
-  }
 }

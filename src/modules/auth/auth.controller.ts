@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   HttpCode,
-  InternalServerErrorException,
   Post,
   Req,
   Res,
@@ -17,7 +16,8 @@ import {
 } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 
-import { ApiErrorCode } from '@/common/constants/api-error-code.constant';
+import { ApiErrorMessage } from '@/common/constants/api-error-message.constant';
+import { UseAuth } from '@/common/decorators/use-auth.decorator';
 import APIError from '@/common/exceptions/api-error.exception';
 
 import { AuthService } from './auth.service';
@@ -45,19 +45,19 @@ export class AuthController {
     const result = await this.authService.login(body);
 
     if (result.isErr()) {
-      const error = result._unsafeUnwrapErr();
+      const error = result.error;
 
       switch (error.message) {
         case 'USER_NOT_FOUND':
-          throw APIError.fromMessage(ApiErrorCode.USER_NOT_FOUND);
+          throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
         case 'WRONG_PASSWORD':
-          throw APIError.fromMessage(ApiErrorCode.WRONG_PASSWORD);
+          throw APIError.fromMessage(ApiErrorMessage.WRONG_PASSWORD);
         default:
-          throw new InternalServerErrorException();
+          throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
       }
     }
 
-    const loginData = result._unsafeUnwrap();
+    const loginData = result.value;
 
     res.cookie('_rtoken', loginData.refresh.token, {
       httpOnly: true,
@@ -87,7 +87,7 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromMessage(ApiErrorCode.NOT_LOGGED);
+      throw APIError.fromMessage(ApiErrorMessage.NOT_LOGGED);
     }
 
     await this.authService.logout(token);
@@ -114,19 +114,19 @@ export class AuthController {
     const result = await this.authService.register(body);
 
     if (result.isErr()) {
-      const error = result._unsafeUnwrapErr();
+      const error = result.error;
 
       switch (error.message) {
         case 'USER_EXISTS':
-          throw APIError.fromMessage(ApiErrorCode.USER_REGISTERED);
+          throw APIError.fromMessage(ApiErrorMessage.USER_REGISTERED);
         case 'USERNAME_EXISTS':
-          throw APIError.fromMessage(ApiErrorCode.USERNAME_EXISTS);
+          throw APIError.fromMessage(ApiErrorMessage.USERNAME_EXISTS);
         default:
-          throw new InternalServerErrorException();
+          throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
       }
     }
 
-    const registerData = result._unsafeUnwrap();
+    const registerData = result.value;
 
     res.cookie('_rtoken', registerData.refresh.token, {
       httpOnly: true,
@@ -156,16 +156,16 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromMessage(ApiErrorCode.NOT_LOGGED);
+      throw APIError.fromMessage(ApiErrorMessage.NOT_LOGGED);
     }
 
     const result = await this.authService.refresh(token);
 
     if (result.isErr()) {
-      throw APIError.fromMessage(ApiErrorCode.TOKEN_EXPIRED);
+      throw APIError.fromMessage(ApiErrorMessage.TOKEN_EXPIRED);
     }
 
-    const accessToken = result._unsafeUnwrap();
+    const accessToken = result.value;
 
     return {
       access: {
@@ -175,14 +175,11 @@ export class AuthController {
     };
   }
 
-  // TODO - add JWT Guard
+  @UseAuth()
   @Get('logout/devices')
   @ApiOperation({ operationId: 'Logout User from all devices' })
   @ApiOkResponse({
     description: 'Return success message and clear refresh token cookie',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'User is not logged in',
   })
   async logoutDevices(
     @Req() req: Request,
@@ -191,10 +188,10 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromMessage(ApiErrorCode.NOT_LOGGED);
+      throw APIError.fromMessage(ApiErrorMessage.NOT_LOGGED);
     }
 
-    await this.authService.logoutFromAllDevices(token);
+    await this.authService.logout(token, true);
 
     res.clearCookie('_rtoken');
 

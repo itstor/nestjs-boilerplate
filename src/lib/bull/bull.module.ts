@@ -2,7 +2,9 @@ import { BullModule, BullRootModuleOptions } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { IRedisEnvConfig } from '../config/configs/redis.config';
+import { ConfigName } from '@/common/constants/config-name.constant';
+
+import { IBullConfig } from '../config/configs/bull.config';
 
 @Module({
   imports: [
@@ -10,11 +12,11 @@ import { IRedisEnvConfig } from '../config/configs/redis.config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const redisConfig = configService.get<IRedisEnvConfig>('redis-config');
+        const redisConfig = configService.get<IBullConfig>(ConfigName.BULL);
         return <BullRootModuleOptions>{
-          redis: {
-            host: redisConfig?.host,
-            port: redisConfig?.port,
+          url: redisConfig?.redis_url,
+          defaultJobOptions: {
+            removeOnComplete: true,
           },
         };
       },

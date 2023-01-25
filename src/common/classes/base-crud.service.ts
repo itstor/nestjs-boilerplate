@@ -16,7 +16,7 @@ import { DBUtils } from '../helpers/db.utils';
 
 export class CRUDService<T extends DefaultEntity> {
   constructor(
-    protected readonly repository: Repository<T>,
+    protected readonly userRepo: Repository<T>,
     private readonly paginationConfig: PaginateConfig<T>,
   ) {}
 
@@ -42,7 +42,7 @@ export class CRUDService<T extends DefaultEntity> {
   public async findMany(options: PaginateQuery) {
     const data = await paginate<T>(
       options,
-      this.repository,
+      this.userRepo,
       this.paginationConfig,
     );
 
@@ -55,7 +55,7 @@ export class CRUDService<T extends DefaultEntity> {
    * @returns Entity or null if entity was not found.
    */
   public async findOne(options: FindOptionsWhere<T>) {
-    const entity = await this.repository.findOne({ where: options });
+    const entity = await this.userRepo.findOne({ where: options });
 
     return entity;
   }
@@ -71,14 +71,14 @@ export class CRUDService<T extends DefaultEntity> {
     data: DeepPartial<T>,
   ): Promise<Result<T, CRUDException<T>>> {
     try {
-      const { affected } = await this.repository.update(id, data as any);
+      const { affected } = await this.userRepo.update(id, data as any);
 
       if (affected === 0) return err(new CRUDException<T>('NOT_FOUND'));
     } catch (e) {
       return err(this.handleError(e));
     }
 
-    const result = await this.repository.findOne({ where: { id: id } });
+    const result = await this.userRepo.findOne({ where: { id: id } });
 
     if (!result) return err(new CRUDException<T>('NOT_FOUND'));
 
@@ -94,7 +94,7 @@ export class CRUDService<T extends DefaultEntity> {
     data: DeepPartial<T>,
   ): Promise<Result<T, CRUDException<T>>> {
     try {
-      const result = await this.repository.save(this.repository.create(data));
+      const result = await this.userRepo.save(this.userRepo.create(data));
 
       return ok(result);
     } catch (e) {
@@ -110,10 +110,10 @@ export class CRUDService<T extends DefaultEntity> {
   public async delete(
     options: FindOptionsWhere<T>,
   ): Promise<Result<null, CRUDException<T>>> {
-    if (!(await this.repository.findOne({ where: options })))
+    if (!(await this.userRepo.findOne({ where: options })))
       return err(new CRUDException<T>('NOT_FOUND'));
 
-    await this.repository.delete(options);
+    await this.userRepo.delete(options);
 
     return ok(null);
   }
@@ -124,6 +124,6 @@ export class CRUDService<T extends DefaultEntity> {
    * @returns Number of entities that match given options.
    */
   public async count(options?: FindManyOptions<T>) {
-    return await this.repository.count(options);
+    return await this.userRepo.count(options);
   }
 }
