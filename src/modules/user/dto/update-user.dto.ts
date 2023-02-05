@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 
 import { IsUsername } from '@/common/validators/is-username.validator';
-import { UserRole } from '@/entities/users.entity';
+import { UserRole } from '@/entities/user.entity';
 
 export class UpdateUserDto {
   @ApiPropertyOptional()

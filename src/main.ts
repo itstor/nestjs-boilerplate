@@ -9,7 +9,7 @@ import helmet from 'helmet';
 import { Logger, LoggerErrorInterceptor } from 'nestjs-pino';
 import * as path from 'path';
 import * as responseTime from 'response-time';
-import * as favicon from 'serve-favicon';
+import { initializeTransactionalContext } from 'typeorm-transactional';
 
 import { AppModule } from '@/app.module';
 
@@ -21,6 +21,8 @@ import RequestValidationPipe from './common/pipes/request-validation.pipe';
 import { IAppEnvConfig } from './lib/config/configs/app.config';
 
 async function bootstrap() {
+  initializeTransactionalContext();
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: true,
   });
@@ -56,13 +58,7 @@ async function bootstrap() {
   app.set('trust proxy', 1);
 
   // Configure Middlewares
-  app.use([
-    helmet(),
-    responseTime(),
-    compression(),
-    favicon(path.join(__dirname, '..', 'public', 'favicon.ico')),
-    cookieParser(),
-  ]);
+  app.use([helmet(), responseTime(), compression(), cookieParser()]);
 
   app.enableCors({
     preflightContinue: true,

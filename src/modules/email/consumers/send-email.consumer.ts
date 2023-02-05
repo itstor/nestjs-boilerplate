@@ -6,15 +6,23 @@ import {
   Processor,
 } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
 import { Job } from 'bull';
 
-import { EmailService } from '../email.service';
-
 @Processor('sendMail')
-export class EmailProcessor {
+export class SendEmailConsumer {
   private readonly logger = new Logger(this.constructor.name);
 
-  constructor(private readonly mailService: EmailService) {}
+  constructor(private readonly mailerService: MailerService) {}
+
+  private async sendEmail(data: any) {
+    await this.mailerService.sendMail({
+      to: data.to,
+      subject: data.subject,
+      template: data.template,
+      context: data.context,
+    });
+  }
 
   @OnQueueActive()
   onActive(job: Job) {
@@ -32,7 +40,7 @@ export class EmailProcessor {
 
   @OnQueueFailed()
   onError(job: Job<any>, error: Error) {
-    this.logger.log(
+    this.logger.error(
       `Failed job ${job.id} of type ${job.name}: ${error.message}`,
       error.stack,
     );
@@ -43,7 +51,22 @@ export class EmailProcessor {
     this.logger.log('Sending confirmation email.');
 
     try {
-      const result = await this.mailService.sendEmail(job.data);
+      const result = await this.sendEmail(job.data);
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to send confirmation email.', error.stack);
+
+      throw error;
+    }
+  }
+
+  @Process('reset-password')
+  async sendResetPasswordEmail(job: Job): Promise<any> {
+    this.logger.log('Sending confirmation email.');
+
+    try {
+      const result = await this.sendEmail(job.data);
 
       return result;
     } catch (error) {

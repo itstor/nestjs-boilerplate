@@ -1,10 +1,10 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 
 import { DefaultEntity } from './default.entity';
-import { Users } from './users.entity';
+import { User } from './user.entity';
 
-@Entity()
-export default class LinkedAccounts extends DefaultEntity {
+@Entity('linked_accounts')
+export default class LinkedAccount extends DefaultEntity {
   @Column()
   provider: string;
 
@@ -14,8 +14,8 @@ export default class LinkedAccounts extends DefaultEntity {
   @Column()
   providerAccountId: string;
 
-  @ManyToOne(() => Users, (user) => user.linkedAccounts, {
+  @ManyToOne(() => User, (user) => user.linkedAccounts, {
     onDelete: 'CASCADE',
   })
-  user: Users;
+  user: User;
 }

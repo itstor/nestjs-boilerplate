@@ -4,16 +4,17 @@ import { Exclude } from 'class-transformer';
 import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 
 import { DefaultEntity } from './default.entity';
-import LinkedAccounts from './linked-accounts.entity';
-import { RefreshTokens } from './resfresh-tokens.entity';
+import LinkedAccount from './linked-account.entity';
+import { OneTimePassword } from './one-time-password.entity';
+import { RefreshToken } from './resfresh-token.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
 }
 
-@Entity()
-export class Users extends DefaultEntity {
+@Entity('Users')
+export class User extends DefaultEntity {
   @Column({ unique: true })
   @ApiProperty()
   email: string;
@@ -35,11 +36,14 @@ export class Users extends DefaultEntity {
   @ApiProperty()
   isVerified: boolean;
 
-  @OneToMany(() => RefreshTokens, (refreshToken) => refreshToken.user)
-  refreshTokens?: RefreshTokens[];
+  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+  refreshTokens?: RefreshToken[];
 
-  @OneToMany(() => LinkedAccounts, (linkedAccounts) => linkedAccounts.user)
-  linkedAccounts?: LinkedAccounts[];
+  @OneToMany(() => LinkedAccount, (linkedAccounts) => linkedAccounts.user)
+  linkedAccounts?: LinkedAccount[];
+
+  @OneToMany(() => OneTimePassword, (otp) => otp.user)
+  oneTimePasswords?: OneTimePassword[];
 
   @BeforeInsert()
   @BeforeUpdate()

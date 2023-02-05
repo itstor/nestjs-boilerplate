@@ -1,9 +1,9 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-import { Users } from '@/entities/users.entity';
+import { User } from '@/entities/user.entity';
 
 export const LoggedUser = createParamDecorator(
-  (data: keyof Users, context: ExecutionContext) => {
+  (data: keyof User, context: ExecutionContext) => {
     const req = context.switchToHttp().getRequest();
     const user = req.user;
 

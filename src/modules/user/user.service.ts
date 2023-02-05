@@ -4,14 +4,14 @@ import { PaginateConfig } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 
 import { CRUDService } from '@/common/classes/base-crud.service';
-import { Users } from '@/entities/users.entity';
+import { User } from '@/entities/user.entity';
 
 @Injectable()
-export class UserService extends CRUDService<Users> {
+export class UserService extends CRUDService<User> {
   constructor(
-    @InjectRepository(Users) protected readonly userRepo: Repository<Users>,
+    @InjectRepository(User) protected readonly userRepo: Repository<User>,
   ) {
-    const paginationConfig: PaginateConfig<Users> = {
+    const paginationConfig: PaginateConfig<User> = {
       sortableColumns: ['id', 'email', 'role', 'createdAt', 'updatedAt'],
       nullSort: 'last',
       searchableColumns: ['email', 'username'],

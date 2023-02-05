@@ -9,8 +9,8 @@ import { FindOptionsWhere, Repository } from 'typeorm';
 
 import { ConfigName } from '@/common/constants/config-name.constant';
 import { ServiceException } from '@/common/exceptions/service.exception';
-import { RefreshTokens } from '@/entities/resfresh-tokens.entity';
-import { Users } from '@/entities/users.entity';
+import { RefreshToken } from '@/entities/resfresh-token.entity';
+import { User } from '@/entities/user.entity';
 import { IJWTConfig } from '@/lib/config/configs/jwt.config';
 
 type JWTServiceErrorType = 'INVALID' | 'REVOKED' | 'EXPIRED';
@@ -20,8 +20,8 @@ export class TokenService {
   private readonly jwtConfig?: IJWTConfig;
 
   constructor(
-    @InjectRepository(RefreshTokens)
-    private readonly tokenRepo: Repository<RefreshTokens>,
+    @InjectRepository(RefreshToken)
+    private readonly tokenRepo: Repository<RefreshToken>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {
@@ -40,7 +40,7 @@ export class TokenService {
    * @returns {Promise<string>}
    */
   public async generateRefreshToken(
-    user: Omit<Users, 'password'>,
+    user: Omit<User, 'password'>,
     ttl = this.jwtConfig?.refreshExpirationDays || 30,
   ) {
     const now = dayjs();
@@ -49,7 +49,7 @@ export class TokenService {
     const { id } = await this.tokenRepo.save(
       this.tokenRepo.create({
         user,
-        expiresIn: expiresIn.date(),
+        expiredOn: expiresIn.toDate(),
       }),
     );
 
@@ -72,7 +72,7 @@ export class TokenService {
     };
   }
 
-  public async generateAccessToken(user: Omit<Users, 'password'>) {
+  public async generateAccessToken(user: Omit<User, 'password'>) {
     const ttl = this.jwtConfig?.accessExpirationMinutes;
 
     const now = dayjs();
@@ -141,7 +141,7 @@ export class TokenService {
   public async revokeToken(token: string, all = false) {
     const decodedJwt = this.jwtService.decode(token) as Record<string, any>;
 
-    const query: FindOptionsWhere<RefreshTokens> = {
+    const query: FindOptionsWhere<RefreshToken> = {
       ...(all ? {} : { id: decodedJwt?.jti }),
       user: {
         id: decodedJwt?.sub,

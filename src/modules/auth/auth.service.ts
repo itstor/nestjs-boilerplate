@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
+import * as Joi from 'joi';
 import { err, ok } from 'neverthrow';
 
 import { ConfigName } from '@/common/constants/config-name.constant';
 import { ServiceException } from '@/common/exceptions/service.exception';
+import { OTPType } from '@/entities/one-time-password.entity';
 import { IJWTConfig } from '@/lib/config/configs/jwt.config';
 
 import { UserLoginDto } from './dto/user-login.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
-import { EmailService } from '../email/email.service';
+import { SendEmailProducerService } from '../email/producers/send-email.producer.service';
+import { OTPService } from '../otp/otp.service';
 import { TokenService } from '../token/token.service';
 import { UserService } from '../user/user.service';
 
@@ -21,13 +24,23 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
-    private readonly emailService: EmailService,
+    private readonly emailProducerService: SendEmailProducerService,
+    private readonly otpService: OTPService,
   ) {
     this.jwtConfig = this.configService.get<IJWTConfig>(ConfigName.JWT);
   }
 
   public async login(data: UserLoginDto) {
-    const user = await this.userService.findOne({ email: data.email });
+    const isEmail = Joi.string()
+      .email()
+      .required()
+      .validate(data.emailOrUsername);
+
+    const query = isEmail.error
+      ? { username: data.emailOrUsername }
+      : { email: data.emailOrUsername };
+
+    const user = await this.userService.findOne(query);
 
     if (!user) {
       return err(new ServiceException('USER_NOT_FOUND'));
@@ -78,7 +91,19 @@ export class AuthService {
 
     const user = createdUser.value;
 
-    await this.emailService.sendVerificationEmail(user);
+    const {
+      otp: { code, expiredOn },
+    } = await this.otpService.createOTP({
+      userId: user.id,
+      type: OTPType.VERIFY_EMAIL,
+    });
+
+    await this.emailProducerService.sendVerificationEmail({
+      code: code,
+      email: user.email,
+      username: user.username,
+      expireDate: expiredOn.toUTCString(),
+    });
 
     const refreshToken = await this.tokenService.generateRefreshToken(
       user,

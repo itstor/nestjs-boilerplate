@@ -15,13 +15,10 @@ import { IBullConfig } from '../config/configs/bull.config';
         const redisConfig = configService.get<IBullConfig>(ConfigName.BULL);
         return <BullRootModuleOptions>{
           url: redisConfig?.redis_url,
-          defaultJobOptions: {
-            removeOnComplete: true,
-          },
         };
       },
     }),
   ],
   exports: [BullModule],
 })
-export class BullConfigModule {}
+export class BullNestModule {}

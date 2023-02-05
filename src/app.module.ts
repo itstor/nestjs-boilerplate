@@ -5,7 +5,7 @@ import { SentryInterceptor } from '@ntegral/nestjs-sentry';
 import { ThrottlerBehindProxyGuard } from './common/guards/throttler-behind-proxy.guard';
 import {
   AppConfigModule,
-  BullConfigModule,
+  BullNestModule,
   JWTConfigModule,
   LoggerConfigModule,
   NodeMailerConfigModule,
@@ -13,7 +13,9 @@ import {
   ThrottlerConfigModule,
   TypeOrmModuleConfig,
 } from './lib';
+import { SessionConfigModule } from './lib/session/session.module';
 import { EmailModule, PingModule, UserModule } from './modules';
+import { AccountModule } from './modules/account/account.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TokenModule } from './modules/token/token.module';
 
@@ -22,7 +24,8 @@ import { TokenModule } from './modules/token/token.module';
     AppConfigModule,
     LoggerConfigModule,
     TypeOrmModuleConfig,
-    BullConfigModule,
+    SessionConfigModule,
+    BullNestModule,
     NodeMailerConfigModule,
     JWTConfigModule,
     EmailModule,
@@ -32,6 +35,7 @@ import { TokenModule } from './modules/token/token.module';
     PingModule,
     AuthModule,
     TokenModule,
+    AccountModule,
   ],
   controllers: [],
   providers: [

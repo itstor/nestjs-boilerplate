@@ -14,6 +14,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 
 import { ApiErrorMessage } from '@/common/constants/api-error-message.constant';
@@ -100,6 +101,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @Throttle(1, 60) // limit 1 register per minute
   @ApiOperation({ operationId: 'Register User' })
   @ApiOkResponse({
     description: 'Return user data and access token',
