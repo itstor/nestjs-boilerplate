@@ -1,8 +1,8 @@
-# NestJS Starter (WIP)
+# NestJS Boilerplate (WIP)
 
 ## Features
 
-This is a starter project for NestJS. It includes the following:
+This is a boilerplate project for NestJS. It includes the following:
 
 - 🚀 NestJS 9
 - 📖 TypeScript
