@@ -13,7 +13,7 @@ This is a starter project for NestJS. It includes the following:
 - 👷 Bull — background jobs
 - ✉️ NodeMailer — sending emails
 - 📊 Sentry — Application Monitoring and Error Tracking
-- 😉 Conventional commits — with auto emoji
+- 😉 Conventional commits — with auto emoji for each commit message
 - 🛡️ JWT Authentication
 - 🛡️ Sign in with Google with link to existing account feature
 - 🔐 Recover password and email verification using OTP
