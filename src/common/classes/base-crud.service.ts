@@ -71,19 +71,17 @@ export class CRUDService<T extends DefaultEntity> {
     id: any,
     data: DeepPartial<T>,
   ): Promise<Result<T, CRUDException<T>>> {
-    try {
-      const { affected } = await this.repo.update(id, data as any);
+    const entity = await this.repo.findOne({ where: { id: id } });
 
-      if (affected === 0) return err(new CRUDException<T>('NOT_FOUND'));
+    if (!entity) return err(new CRUDException<T>('NOT_FOUND'));
+
+    try {
+      const result = await this.repo.save(Object.assign(entity, data));
+
+      return ok(result);
     } catch (e) {
       return err(this.handleError(e));
     }
-
-    const result = await this.repo.findOne({ where: { id: id } });
-
-    if (!result) return err(new CRUDException<T>('NOT_FOUND'));
-
-    return ok(result);
   }
 
   /**
