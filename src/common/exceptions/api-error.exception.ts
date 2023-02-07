@@ -11,19 +11,22 @@ export interface IAPIError {
 }
 
 export default class APIError extends HttpException {
-  constructor(response: IAPIError, status: number) {
-    super(response, status);
+  constructor(response: IAPIError, status: number, cause?: Error) {
+    super(response, status, { cause });
   }
 
-  public static fromCode(errorCode: keyof typeof ApiErrorMessage) {
+  public static fromCode(
+    errorCode: keyof typeof ApiErrorMessage,
+    cause?: Error,
+  ) {
     const { code, message, httpCode } = ApiErrorMessage[errorCode];
 
-    return new APIError({ code, message }, httpCode);
+    return new APIError({ code, message }, httpCode, cause);
   }
 
-  public static fromMessage(errorCode: IApiErrorMessage) {
+  public static fromMessage(errorCode: IApiErrorMessage, cause?: Error) {
     const { code, message, httpCode } = errorCode;
 
-    return new APIError({ code, message }, httpCode);
+    return new APIError({ code, message }, httpCode, cause);
   }
 }

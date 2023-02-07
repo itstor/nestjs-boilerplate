@@ -13,7 +13,7 @@ export enum UserRole {
   USER = 'user',
 }
 
-@Entity('Users')
+@Entity('users')
 export class User extends DefaultEntity {
   @Column({ unique: true })
   @ApiProperty()

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { UniqueViolationError, wrapError } from 'db-errors';
 import { paginate, PaginateConfig, PaginateQuery } from 'nestjs-paginate';
 import { err, ok, Result } from 'neverthrow';
@@ -12,26 +13,30 @@ import {
 import { DefaultEntity } from '@/entities/default.entity';
 
 import { CRUDException } from '../exceptions/crud-service.exception';
-import { DBUtils } from '../helpers/db.utils';
 
 export class CRUDService<T extends DefaultEntity> {
   constructor(
     protected readonly userRepo: Repository<T>,
     private readonly paginationConfig: PaginateConfig<T>,
+    private readonly entityName: string,
   ) {}
+
+  private readonly logger: Logger = new Logger(
+    `${CRUDService.name}<${this.entityName}>`,
+  );
 
   protected handleError(e: any) {
     if (e instanceof TypeORMError) {
       const code = wrapError(e);
 
       if (code instanceof UniqueViolationError) {
-        const field = DBUtils.getColumnFromError(e, (code as any).client);
-
-        return new CRUDException<T>('EXISTS', field as any);
+        return new CRUDException<T>('EXISTS', e, code.columns[0] as any);
       }
     }
 
-    throw new CRUDException<T>('UNKNOWN', e.message);
+    this.logger.error(e);
+
+    throw new CRUDException<T>('UNKNOWN', e);
   }
 
   /**

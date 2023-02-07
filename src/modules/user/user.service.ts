@@ -19,6 +19,6 @@ export class UserService extends CRUDService<User> {
       defaultSortBy: [['id', 'ASC']],
     };
 
-    super(userRepo, paginationConfig);
+    super(userRepo, paginationConfig, 'User');
   }
 }

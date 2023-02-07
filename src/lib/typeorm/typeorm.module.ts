@@ -19,12 +19,8 @@ import { IDatabaseConfig } from '@/lib/config/configs/db.config';
         const appConfig = configService.get<IAppEnvConfig>(ConfigName.APP);
 
         return <TypeOrmModuleOptions>{
-          type: 'sqlite',
-          // host: path.join(__dirname, '..', '..', '..', 'test.db'),
-          // port: dbConfig?.port,
-          // username: dbConfig?.username,
-          // password: dbConfig?.password,
-          database: path.join(__dirname, '..', '..', '..', 'test.db'),
+          type: dbConfig?.type,
+          url: dbConfig?.url,
           entities: [
             path.join(__dirname, '..', '..', 'entities', '*.entity.{ts,js}'),
           ],

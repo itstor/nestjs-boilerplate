@@ -86,7 +86,7 @@ export class AuthService {
         }
       }
 
-      return err(new ServiceException('UNKNOWN'));
+      return err(new ServiceException('UNKNOWN', error.cause));
     }
 
     const user = createdUser.value;
@@ -129,7 +129,15 @@ export class AuthService {
     const isVerified = await this.tokenService.verifyRefreshToken(token);
 
     if (isVerified.isErr()) {
-      return err(new ServiceException('INVALID_REFRESH_TOKEN'));
+      const error = isVerified.error;
+
+      if (error.name === 'EXPIRED') {
+        return err(new ServiceException('REFRESH_TOKEN_EXPIRED'));
+      } else if (error.name === 'INVALID') {
+        return err(new ServiceException('INVALID_REFRESH_TOKEN'));
+      } else if (error.name === 'REVOKED') {
+        return err(new ServiceException('REVOKED_REFRESH_TOKEN'));
+      }
     }
 
     const decode = await this.tokenService.decode(token);

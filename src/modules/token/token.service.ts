@@ -3,8 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as dayjs from 'dayjs';
+import { TokenExpiredError } from 'jsonwebtoken';
 import { pick } from 'lodash';
-import { err, ok, Result } from 'neverthrow';
+import { err, ok } from 'neverthrow';
 import { FindOptionsWhere, Repository } from 'typeorm';
 
 import { ConfigName } from '@/common/constants/config-name.constant';
@@ -12,8 +13,6 @@ import { ServiceException } from '@/common/exceptions/service.exception';
 import { RefreshToken } from '@/entities/resfresh-token.entity';
 import { User } from '@/entities/user.entity';
 import { IJWTConfig } from '@/lib/config/configs/jwt.config';
-
-type JWTServiceErrorType = 'INVALID' | 'REVOKED' | 'EXPIRED';
 
 @Injectable()
 export class TokenService {
@@ -96,20 +95,18 @@ export class TokenService {
     };
   }
 
-  public async verifyRefreshToken(
-    token: string,
-  ): Promise<Result<boolean, ServiceException<JWTServiceErrorType>>> {
+  public async verifyRefreshToken(token: string) {
     try {
       await this.jwtService.verifyAsync(token, {
         secret: this.jwtConfig?.secret,
         clockTimestamp: dayjs().unix(),
       });
     } catch (e) {
-      if (e.message === 'jwt expired') {
-        return err(new ServiceException<JWTServiceErrorType>('EXPIRED'));
+      if (e instanceof TokenExpiredError) {
+        return err(new ServiceException('EXPIRED'));
       }
 
-      return err(new ServiceException<JWTServiceErrorType>('INVALID'));
+      return err(new ServiceException('INVALID'));
     }
 
     const decodedJwt = this.jwtService.decode(token) as Record<string, any>;
@@ -123,11 +120,9 @@ export class TokenService {
       },
     });
 
-    if (!tokenFromDB)
-      return err(new ServiceException<JWTServiceErrorType>('INVALID'));
+    if (!tokenFromDB) return err(new ServiceException('INVALID'));
 
-    if (tokenFromDB.isRevoked)
-      return err(new ServiceException<JWTServiceErrorType>('REVOKED'));
+    if (tokenFromDB.isRevoked) return err(new ServiceException('REVOKED'));
 
     return ok(true);
   }

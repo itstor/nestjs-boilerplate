@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -87,13 +86,14 @@ export class AdminUserController {
           case 'username':
             throw APIError.fromMessage(ApiErrorMessage.USERNAME_EXISTS);
           case 'email':
-            throw APIError.fromMessage(ApiErrorMessage.USER_REGISTERED);
-          default:
-            throw new BadRequestException({ message: error.message });
+            throw APIError.fromMessage(ApiErrorMessage.USER_EMAIL_REGISTERED);
         }
       }
 
-      throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
+      throw APIError.fromMessage(
+        ApiErrorMessage.INTERNAL_SERVER_ERROR,
+        error.cause,
+      );
     }
 
     return result.value;
@@ -120,15 +120,16 @@ export class AdminUserController {
           case 'username':
             throw APIError.fromMessage(ApiErrorMessage.USERNAME_EXISTS);
           case 'email':
-            throw APIError.fromMessage(ApiErrorMessage.USER_REGISTERED);
-          default:
-            throw new BadRequestException({ message: error.message });
+            throw APIError.fromMessage(ApiErrorMessage.USER_EMAIL_REGISTERED);
         }
       } else if (error.name === 'NOT_FOUND') {
         throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
       }
 
-      throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
+      throw APIError.fromMessage(
+        ApiErrorMessage.INTERNAL_SERVER_ERROR,
+        error.cause,
+      );
     }
 
     return result.value;
@@ -153,7 +154,10 @@ export class AdminUserController {
         throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
       }
 
-      throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
+      throw APIError.fromMessage(
+        ApiErrorMessage.INTERNAL_SERVER_ERROR,
+        error.cause,
+      );
     }
 
     res.sendStatus(HttpStatus.NO_CONTENT);

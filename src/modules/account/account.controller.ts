@@ -22,11 +22,11 @@ import { RecoverPasswordDTO } from './dto/recover-password.dto';
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
-  @Post('recover')
+  @Post('forgot-password')
   @Throttle(2, 60) // 2 recover request per minute
   @HttpCode(200)
-  @ApiOperation({ operationId: 'Recover User Account' })
-  @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiOperation({ operationId: 'Forgot Password' })
+  @ApiNotFoundResponse({ description: 'User with email not found' })
   @ApiOkResponse({ description: 'Success message' })
   @ApiTooManyRequestsResponse({
     description: 'Only 2 recover request per minute',
@@ -40,11 +40,9 @@ export class AccountController {
     if (result.isErr()) {
       const error = result.error;
 
-      switch (error.message) {
+      switch (error.name) {
         case 'USER_NOT_FOUND':
           throw APIError.fromMessage(ApiErrorMessage.WRONG_EMAIL);
-        default:
-          throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
       }
     }
 
@@ -64,7 +62,7 @@ export class AccountController {
     };
   }
 
-  @Post('recover/verify')
+  @Post('reset-password/verify')
   @HttpCode(200)
   @ApiOperation({ operationId: 'Verify Recover User Account' })
   @ApiNotFoundResponse({ description: 'User not found' })
@@ -74,7 +72,7 @@ export class AccountController {
     session: { recoverPassword: string; recoverPasswordVerified: boolean },
     @Body() body: { otp: string },
   ) {
-    return 'bo';
+    // const isVerified = await this.otp
   }
 
   @Get('test')

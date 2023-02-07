@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Logger,
   Post,
   Req,
   Res,
@@ -28,6 +29,8 @@ import { UserRegisterDto } from './dto/user-register.dto';
 @Controller({ path: 'auth', version: '1' })
 @ApiTags('Authentication')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
@@ -48,13 +51,11 @@ export class AuthController {
     if (result.isErr()) {
       const error = result.error;
 
-      switch (error.message) {
+      switch (error.name) {
         case 'USER_NOT_FOUND':
           throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
         case 'WRONG_PASSWORD':
           throw APIError.fromMessage(ApiErrorMessage.WRONG_PASSWORD);
-        default:
-          throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
       }
     }
 
@@ -88,12 +89,13 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromMessage(ApiErrorMessage.NOT_LOGGED);
+      throw APIError.fromMessage(ApiErrorMessage.UNAUTHORIZED);
     }
 
     await this.authService.logout(token);
 
     res.clearCookie('_rtoken');
+    req.session = null;
 
     return {
       message: 'Logout successful',
@@ -118,14 +120,19 @@ export class AuthController {
     if (result.isErr()) {
       const error = result.error;
 
-      switch (error.message) {
+      switch (error.name) {
         case 'USER_EXISTS':
-          throw APIError.fromMessage(ApiErrorMessage.USER_REGISTERED);
+          throw APIError.fromMessage(ApiErrorMessage.USER_EMAIL_REGISTERED);
         case 'USERNAME_EXISTS':
           throw APIError.fromMessage(ApiErrorMessage.USERNAME_EXISTS);
-        default:
-          throw APIError.fromMessage(ApiErrorMessage.INTERNAL_SERVER_ERROR);
       }
+
+      this.logger.error(error);
+
+      throw APIError.fromMessage(
+        ApiErrorMessage.INTERNAL_SERVER_ERROR,
+        error.cause,
+      );
     }
 
     const registerData = result.value;
@@ -158,13 +165,24 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromMessage(ApiErrorMessage.NOT_LOGGED);
+      throw APIError.fromMessage(ApiErrorMessage.UNAUTHORIZED);
     }
 
     const result = await this.authService.refresh(token);
 
     if (result.isErr()) {
-      throw APIError.fromMessage(ApiErrorMessage.TOKEN_EXPIRED);
+      const error = result.error;
+
+      switch (error.name) {
+        case 'REFRESH_TOKEN_EXPIRED':
+          throw APIError.fromMessage(ApiErrorMessage.TOKEN_EXPIRED);
+        case 'INVALID_REFRESH_TOKEN':
+          throw APIError.fromMessage(ApiErrorMessage.TOKEN_INVALID);
+        case 'REVOKED_REFRESH_TOKEN':
+          throw APIError.fromMessage(ApiErrorMessage.TOKEN_REVOKED);
+        case 'USER_NOT_FOUND':
+          throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
+      }
     }
 
     const accessToken = result.value;
@@ -190,7 +208,7 @@ export class AuthController {
     const token = req.cookies._rtoken;
 
     if (!token) {
-      throw APIError.fromMessage(ApiErrorMessage.NOT_LOGGED);
+      throw APIError.fromMessage(ApiErrorMessage.UNAUTHORIZED);
     }
 
     await this.authService.logout(token, true);

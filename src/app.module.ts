@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { HttpException, Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { SentryInterceptor } from '@ntegral/nestjs-sentry';
 
@@ -17,6 +17,7 @@ import { SessionConfigModule } from './lib/session/session.module';
 import { EmailModule, PingModule, UserModule } from './modules';
 import { AccountModule } from './modules/account/account.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { GoogleOauthModule } from './modules/google-oauth/google-oauth.module';
 import { TokenModule } from './modules/token/token.module';
 
 @Module({
@@ -36,12 +37,21 @@ import { TokenModule } from './modules/token/token.module';
     AuthModule,
     TokenModule,
     AccountModule,
+    GoogleOauthModule,
   ],
   controllers: [],
   providers: [
     {
       provide: APP_INTERCEPTOR,
-      useValue: new SentryInterceptor(),
+      useValue: new SentryInterceptor({
+        filters: [
+          {
+            type: HttpException,
+            filter: (e: HttpException) =>
+              !(e.getStatus() >= 500 && e.getStatus() < 600),
+          },
+        ],
+      }),
     },
     {
       provide: APP_GUARD,

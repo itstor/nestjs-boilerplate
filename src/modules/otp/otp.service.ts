@@ -73,10 +73,6 @@ export class OTPService {
       return false;
     }
 
-    if (dayjs().isAfter(dayjs(otp.expiredOn))) {
-      return false;
-    }
-
     return true;
   }
 }

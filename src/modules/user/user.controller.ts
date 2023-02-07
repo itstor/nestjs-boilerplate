@@ -56,7 +56,7 @@ export class UserController {
     const result = await this.userService.findOne({ email });
 
     if (result) {
-      throw APIError.fromMessage(ApiErrorMessage.USER_REGISTERED);
+      throw APIError.fromMessage(ApiErrorMessage.USER_EMAIL_REGISTERED);
     }
 
     res.sendStatus(HttpStatus.OK);

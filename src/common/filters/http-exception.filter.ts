@@ -18,7 +18,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const errorResponse = exception.getResponse() as IAPIError;
     const code = errorResponse.code ?? exception.name;
     const message = errorResponse.message;
-    const stack = exception.stack;
+    const stack = exception.cause?.stack ?? exception.stack;
 
     response.status(status).json({
       statusCode: status,

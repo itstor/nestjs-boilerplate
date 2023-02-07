@@ -12,8 +12,8 @@ export const ApiErrorMessage = {
     message: 'Something went wrong',
     httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
   },
-  NOT_LOGGED: {
-    code: 'NOT_LOGGED',
+  UNAUTHORIZED: {
+    code: 'UNAUTHORIZED',
     message: 'You are not logged in',
     httpCode: HttpStatus.UNAUTHORIZED,
   },
@@ -34,11 +34,11 @@ export const ApiErrorMessage = {
   },
   TOKEN_NOT_FOUND_REQ: {
     code: 'TOKEN_NOT_FOUND',
-    message: 'Token not found in your request',
+    message: 'Please, provide a token',
     httpCode: HttpStatus.UNAUTHORIZED,
   },
-  USER_REGISTERED: {
-    code: 'USER_REGISTERED',
+  USER_EMAIL_REGISTERED: {
+    code: 'USER_EMAIL_REGISTERED',
     message: 'User already register with the same email',
     httpCode: HttpStatus.CONFLICT,
   },
@@ -60,6 +60,11 @@ export const ApiErrorMessage = {
   USERNAME_EXISTS: {
     code: 'USERNAME_EXISTS',
     message: 'Username already exists',
+    httpCode: HttpStatus.CONFLICT,
+  },
+  EMAIL_EXISTS: {
+    code: 'EMAIL_EXISTS',
+    message: 'Email already exists',
     httpCode: HttpStatus.CONFLICT,
   },
   EMAIL_NOT_SENT: {
