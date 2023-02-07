@@ -48,8 +48,6 @@ export class User extends DefaultEntity {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
-    if (!this.password) return;
-
     this.password = await argon2.hash(this.password, {
       type: argon2.argon2id,
     });
