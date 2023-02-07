@@ -13,14 +13,15 @@ export enum OTPType {
 export class OneTimePassword extends DefaultEntity {
   @ManyToOne(() => User, (user) => user.oneTimePasswords, {
     onDelete: 'CASCADE',
+    eager: true,
   })
-  user?: User;
+  user!: User;
 
   @Column()
   code!: string;
 
   @Column({ default: false })
-  isRevoked!: boolean;
+  isVerified!: boolean;
 
   @Column()
   type!: OTPType;
