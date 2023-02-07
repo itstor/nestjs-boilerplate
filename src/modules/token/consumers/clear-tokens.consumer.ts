@@ -7,6 +7,7 @@ import {
 } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as Sentry from '@sentry/node';
 import { Job } from 'bull';
 import * as dayjs from 'dayjs';
 import { LessThan, Repository } from 'typeorm';
@@ -38,6 +39,7 @@ export class ClearTokenConsumer {
       `Failed to delete expired tokens from the database, with error: ${error.message}`,
       error.stack,
     );
+    Sentry.captureException(error);
   }
 
   @Process('clear-expired')

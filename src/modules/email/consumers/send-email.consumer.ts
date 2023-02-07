@@ -7,6 +7,7 @@ import {
 } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import * as Sentry from '@sentry/node';
 import { Job } from 'bull';
 
 @Processor('sendMail')
@@ -15,7 +16,12 @@ export class SendEmailConsumer {
 
   constructor(private readonly mailerService: MailerService) {}
 
-  private async sendEmail(data: any) {
+  private async sendEmail(data: {
+    to: string;
+    subject: string;
+    template: string;
+    context: Record<string, any>;
+  }) {
     await this.mailerService.sendMail({
       to: data.to,
       subject: data.subject,
@@ -44,6 +50,7 @@ export class SendEmailConsumer {
       `Failed job ${job.id} of type ${job.name}: ${error.message}`,
       error.stack,
     );
+    Sentry.captureException(error);
   }
 
   @Process('confirmation')
@@ -63,14 +70,14 @@ export class SendEmailConsumer {
 
   @Process('reset-password')
   async sendResetPasswordEmail(job: Job): Promise<any> {
-    this.logger.log('Sending confirmation email.');
+    this.logger.log('Sending reset password email.');
 
     try {
       const result = await this.sendEmail(job.data);
 
       return result;
     } catch (error) {
-      this.logger.error('Failed to send confirmation email.', error.stack);
+      this.logger.error('Failed to send reset password email.', error.stack);
 
       throw error;
     }
