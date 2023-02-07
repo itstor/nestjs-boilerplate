@@ -72,4 +72,14 @@ export const ApiErrorMessage = {
     message: 'Cannot send email',
     httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
   },
+  INVALID_OTP: {
+    code: 'INVALID_OTP',
+    message: 'Invalid OTP',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
+  VERIFY_OTP_FIRST: {
+    code: 'VERIFY_OTP_FIRST',
+    message: 'Please verify your otp first',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
 } as const satisfies Record<string, IApiErrorMessage>;

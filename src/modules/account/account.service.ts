@@ -4,6 +4,7 @@ import { err, ok } from 'neverthrow';
 import { ServiceException } from '@/common/exceptions/service.exception';
 import { OTPType } from '@/entities/one-time-password.entity';
 
+import { VerifyResetPasswordOTPDTO } from './dto/verify-reset-password-otp.dto';
 import { SendEmailProducerService } from '../email/producers/send-email.producer.service';
 import { OTPService } from '../otp/otp.service';
 import { UserService } from '../user/user.service';
@@ -43,5 +44,39 @@ export class AccountService {
         unit: 'seconds',
       },
     });
+  }
+
+  public async verifyResetPasswordOTP(data: VerifyResetPasswordOTPDTO) {
+    return await this.otpService.verifyOTP({
+      code: data.otp,
+      type: OTPType.RESET_PASSWORD,
+    });
+  }
+
+  public async resetPassword(data: { otpId: string; password: string }) {
+    const otp = await this.otpService.findOne({
+      id: data.otpId,
+      isVerified: true,
+    });
+
+    if (!otp) {
+      return err(new ServiceException('OTP_NOT_FOUND'));
+    }
+
+    const user = await this.userService.findOne({ id: otp.user.id });
+
+    if (!user) {
+      return err(new ServiceException('USER_NOT_FOUND'));
+    }
+
+    await this.changePassword(user.id, data.password);
+
+    await this.otpService.delete({ id: otp.id });
+
+    return ok(user);
+  }
+
+  public async changePassword(userId: string, password: string) {
+    return await this.userService.update(userId, { password: password });
   }
 }
