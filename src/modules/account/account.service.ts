@@ -54,10 +54,15 @@ export class AccountService {
   }
 
   public async resetPassword(data: { otpId: string; password: string }) {
-    const otp = await this.otpService.findOne({
-      id: data.otpId,
-      isVerified: true,
-    });
+    const otp = await this.otpService.findOne(
+      {
+        id: data.otpId,
+        isVerified: true,
+      },
+      {
+        relations: ['user'],
+      },
+    );
 
     if (!otp) {
       return err(new ServiceException('OTP_NOT_FOUND'));
