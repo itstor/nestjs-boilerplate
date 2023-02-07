@@ -5,6 +5,7 @@ import { err, ok, Result } from 'neverthrow';
 import {
   DeepPartial,
   FindManyOptions,
+  FindOneOptions,
   FindOptionsWhere,
   Repository,
   TypeORMError,
@@ -55,8 +56,11 @@ export class CRUDService<T extends DefaultEntity> {
    * @param id Id of entity that will be found.
    * @returns Entity or null if entity was not found.
    */
-  public async findOne(options: FindOptionsWhere<T>) {
-    const entity = await this.repo.findOne({ where: options });
+  public async findOne(
+    where: FindOptionsWhere<T>,
+    options: Omit<FindOneOptions<T>, 'where'> = {},
+  ) {
+    const entity = await this.repo.findOne({ where, ...options });
 
     return entity;
   }
