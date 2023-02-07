@@ -12,12 +12,7 @@ export class SendEmailProducerService {
 
   constructor(@InjectQueue('sendMail') private queue: Queue) {}
 
-  public async sendVerificationEmail({
-    email,
-    code,
-    username,
-    expireDate,
-  }: {
+  public async sendVerificationEmail(data: {
     email: string;
     code: string;
     username: string;
@@ -25,13 +20,13 @@ export class SendEmailProducerService {
   }) {
     try {
       this.queue.add('confirmation', {
-        to: email,
+        to: data.email,
         subject: 'Confirm your email',
         template: EmailTemplate.VERIFICATION_EMAIL,
         context: {
-          code: code,
-          name: username,
-          expire: expireDate,
+          code: data.code,
+          name: data.username,
+          expire: data.expireDate,
         },
       });
 
@@ -43,24 +38,20 @@ export class SendEmailProducerService {
     }
   }
 
-  public async sendResetPasswordEmail({
-    email,
-    code,
-    expireDate,
-  }: {
+  public async sendResetPasswordEmail(data: {
     email: string;
     code: string;
     expireDate: string;
   }) {
     try {
       this.queue.add('reset-password', {
-        to: email,
+        to: data.email,
         subject: 'Reset your password',
         template: EmailTemplate.RESET_PASSWORD_EMAIL,
         context: {
-          code: code,
-          email: email,
-          expire: expireDate,
+          code: data.code,
+          email: data.email,
+          expire: data.expireDate,
         },
       });
 
