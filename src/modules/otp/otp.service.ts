@@ -42,7 +42,7 @@ export class OTPService extends CRUDService<OneTimePassword> {
     userId,
     type,
     ttl = 300,
-    length = 5,
+    length = 6,
   }: {
     userId?: string;
     type: OTPType;
@@ -51,6 +51,9 @@ export class OTPService extends CRUDService<OneTimePassword> {
   }) {
     const code = otpGenerator.generate(length, {
       digits: true,
+      upperCaseAlphabets: false,
+      specialChars: false,
+      lowerCaseAlphabets: false,
     });
 
     const otp = await this.otpRepo.save(
