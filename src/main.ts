@@ -5,6 +5,10 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as compression from 'compression';
 import * as cookieParser from 'cookie-parser';
+import * as dayjs from 'dayjs';
+import * as advanced from 'dayjs/plugin/advancedFormat';
+import * as timezone from 'dayjs/plugin/timezone';
+import * as utc from 'dayjs/plugin/utc';
 import helmet from 'helmet';
 import { Logger, LoggerErrorInterceptor } from 'nestjs-pino';
 import * as path from 'path';
@@ -22,6 +26,10 @@ import { IAppEnvConfig } from './lib/config/configs/app.config';
 
 async function bootstrap() {
   initializeTransactionalContext();
+
+  dayjs.extend(timezone);
+  dayjs.extend(utc);
+  dayjs.extend(advanced);
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: true,
