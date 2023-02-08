@@ -82,4 +82,9 @@ export const ApiErrorMessage = {
     message: 'Please verify your otp first',
     httpCode: HttpStatus.UNAUTHORIZED,
   },
+  REQ_OTP_FIRST: {
+    code: 'REQ_OTP_FIRST',
+    message: 'Please request otp first',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
 } as const satisfies Record<string, IApiErrorMessage>;

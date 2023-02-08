@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as dayjs from 'dayjs';
 import { err, ok } from 'neverthrow';
 
 import { ServiceException } from '@/common/exceptions/service.exception';
@@ -17,7 +18,7 @@ export class AccountService {
     private readonly otpService: OTPService,
   ) {}
 
-  public async recoverPassword(email: string) {
+  public async requestResetPassword(email: string, userTimezone?: string) {
     const user = await this.userService.findOne({ email });
 
     if (!user) {
@@ -32,7 +33,9 @@ export class AccountService {
     await this.emailService.sendResetPasswordEmail({
       email: user.email,
       code: createdOTP.otp.code,
-      expireDate: createdOTP.otp.expiredOn.toUTCString(),
+      expireDate: dayjs(createdOTP.otp.expiredOn)
+        .tz(userTimezone)
+        .format('DD/MM/YYYY HH:mm:ss z'),
     });
 
     return ok({
@@ -83,5 +86,48 @@ export class AccountService {
 
   public async changePassword(userId: string, password: string) {
     return await this.userService.update(userId, { password: password });
+  }
+
+  public async resendResetPasswordOTP(otpId: string) {
+    const otp = await this.otpService.findOne(
+      {
+        id: otpId,
+        isVerified: false,
+      },
+      {
+        relations: ['user'],
+      },
+    );
+
+    if (!otp) {
+      return err(new ServiceException('OTP_NOT_FOUND'));
+    }
+
+    const user = await this.userService.findOne({ id: otp.user.id });
+
+    if (!user) {
+      return err(new ServiceException('USER_NOT_FOUND'));
+    }
+
+    const createdOTP = await this.otpService.createOTP({
+      userId: user.id,
+      type: OTPType.RESET_PASSWORD,
+    });
+
+    await this.emailService.sendResetPasswordEmail({
+      email: user.email,
+      code: createdOTP.otp.code,
+      expireDate: createdOTP.otp.expiredOn.toUTCString(),
+    });
+
+    return ok({
+      otp: createdOTP.otp,
+      ttl: createdOTP.ttl,
+      length: createdOTP.length,
+      allowResendIn: {
+        value: 30,
+        unit: 'seconds',
+      },
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post, Session } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Req, Session } from '@nestjs/common';
 import {
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -15,6 +15,7 @@ import { AccountService } from './account.service';
 import { RecoverPasswordDTO } from './dto/recover-password.dto';
 import { ResetForgotPasswordDTO } from './dto/reset-forgot-password.dto';
 import { VerifyResetPasswordOTPDTO } from './dto/verify-reset-password-otp.dto';
+import { IForgotPasswordCookie } from './intefaces/forgot-password-cookie.interface';
 
 @Controller({
   path: 'account',
@@ -34,10 +35,14 @@ export class AccountController {
     description: 'Only 2 recover request per minute',
   })
   async recover(
-    @Session() session: { recoverPassword: string },
+    @Session() session: IForgotPasswordCookie,
+    @Req() req: { tz?: string },
     @Body() body: RecoverPasswordDTO,
   ) {
-    const result = await this.accountService.recoverPassword(body.email);
+    const result = await this.accountService.requestResetPassword(
+      body.email,
+      req.tz,
+    );
 
     if (result.isErr()) {
       const error = result.error;
@@ -54,7 +59,11 @@ export class AccountController {
       allowResendIn,
     } = result.value;
 
-    session.recoverPassword = id;
+    session.fpass = {
+      id,
+      verified: false,
+      email: body.email,
+    };
 
     return {
       message: 'Recover password email sent',
@@ -71,16 +80,20 @@ export class AccountController {
   @ApiOkResponse({ description: 'Success message' })
   async verifyRecover(
     @Session()
-    session: { recoverPassword?: string; recoverPasswordVerified?: boolean },
+    session: IForgotPasswordCookie,
     @Body() body: VerifyResetPasswordOTPDTO,
   ) {
+    if (!session.fpass) {
+      throw APIError.fromMessage(ApiErrorMessage.REQ_OTP_FIRST);
+    }
+
     const isVerified = await this.accountService.verifyResetPasswordOTP(body);
 
     if (!isVerified) {
       throw APIError.fromMessage(ApiErrorMessage.INVALID_OTP);
     }
 
-    session.recoverPasswordVerified = true;
+    session.fpass.verified = true;
 
     return {
       message: 'OTP verified',
@@ -94,18 +107,15 @@ export class AccountController {
   @ApiOkResponse({ description: 'Success message' })
   async resetPassword(
     @Session()
-    session: {
-      recoverPassword?: string;
-      recoverPasswordVerified?: boolean;
-    },
+    session: IForgotPasswordCookie,
     @Body() body: ResetForgotPasswordDTO,
   ) {
-    if (!session.recoverPasswordVerified || !session.recoverPassword) {
+    if (!session.fpass?.verified) {
       throw APIError.fromMessage(ApiErrorMessage.VERIFY_OTP_FIRST);
     }
 
     const result = await this.accountService.resetPassword({
-      otpId: session.recoverPassword,
+      otpId: session.fpass.id,
       password: body.password,
     });
 
@@ -120,8 +130,7 @@ export class AccountController {
       }
     }
 
-    session.recoverPasswordVerified = false;
-    session.recoverPassword = undefined;
+    session.fpass = null;
 
     return {
       message: 'Password reset success',
