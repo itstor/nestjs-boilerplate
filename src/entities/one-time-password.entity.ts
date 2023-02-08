@@ -22,7 +22,7 @@ export class OneTimePassword extends DefaultEntity {
   @Column({ default: false })
   isVerified!: boolean;
 
-  @Column()
+  @Column({ type: 'enum', enum: OTPType })
   type!: OTPType;
 
   @Column()
