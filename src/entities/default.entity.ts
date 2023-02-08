@@ -5,13 +5,11 @@ import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
-  Entity,
   PrimaryColumn,
   UpdateDateColumn,
   VersionColumn,
 } from 'typeorm';
 
-@Entity()
 export abstract class DefaultEntity extends BaseEntity {
   @PrimaryColumn('varchar', { length: 21 })
   @ApiProperty()
