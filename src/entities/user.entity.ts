@@ -28,7 +28,7 @@ export class User extends DefaultEntity {
   @ApiHideProperty()
   password: string;
 
-  @Column({ default: UserRole.USER })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   @ApiProperty()
   role: UserRole;
 
