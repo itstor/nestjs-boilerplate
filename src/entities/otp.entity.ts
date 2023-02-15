@@ -10,7 +10,7 @@ export enum OTPType {
 }
 
 @Entity('one_time_passwords')
-export class OneTimePassword extends DefaultEntity {
+export class OTP extends DefaultEntity {
   @ManyToOne(() => User, (user) => user.oneTimePasswords, {
     onDelete: 'CASCADE',
   })

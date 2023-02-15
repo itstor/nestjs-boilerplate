@@ -8,20 +8,20 @@ import {
 import { Queue } from 'bull';
 
 @Injectable()
-export class ClearTokenSchedule implements OnModuleInit, OnModuleDestroy {
+export class ClearOTPSchedule implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(this.constructor.name);
   private readonly time = '0 2 * * *'; // 2:00 AM WIB every day
 
-  constructor(@InjectQueue('clearTokens') private queue: Queue) {}
+  constructor(@InjectQueue('clearOTP') private queue: Queue) {}
 
   onModuleInit() {
-    this.logger.log(`Scheduling clear tokens job to run at ${this.time}.`);
+    this.logger.log(`Scheduling clear OTP job to run at ${this.time}.`);
 
     this.queue.add('clear-expired', {}, { repeat: { cron: this.time } });
   }
 
   onModuleDestroy() {
-    this.logger.log('Removing clear tokens job from the schedule.');
+    this.logger.log('Removing clear OTP job from the schedule.');
 
     this.queue.removeRepeatable('clear-expired', { cron: this.time });
   }

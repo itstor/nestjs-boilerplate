@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { ConfigName } from '@/common/constants/config-name.constant';
 
-import { IBullConfig } from '../config/configs/bull.config';
+import { IRedisConfig } from '../config/configs/redis.config';
 
 @Module({
   imports: [
@@ -12,7 +12,8 @@ import { IBullConfig } from '../config/configs/bull.config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const redisConfig = configService.get<IBullConfig>(ConfigName.BULL);
+        const redisConfig = configService.get<IRedisConfig>(ConfigName.REDIS);
+
         return <BullRootModuleOptions>{
           url: redisConfig?.redis_url,
         };

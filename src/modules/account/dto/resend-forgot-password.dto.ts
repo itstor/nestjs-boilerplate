@@ -1,11 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
-export class VerifyResetPasswordOTPDTO {
-  @ApiProperty()
-  @IsNotEmpty()
-  readonly otp!: string;
-
+export class ResendForgotPasswordDTO {
   @ApiProperty()
   @IsNotEmpty()
   readonly token!: string;

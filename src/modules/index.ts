@@ -3,7 +3,6 @@
  */
 
 export * from './auth/auth.module';
+export * from './auth-token/auth-token.module';
 export * from './email/email.module';
-export * from './ping/ping.module';
-export * from './token/token.module';
 export * from './user/user.module';

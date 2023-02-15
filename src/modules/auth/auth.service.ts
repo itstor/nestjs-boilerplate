@@ -6,14 +6,16 @@ import { err, ok } from 'neverthrow';
 
 import { ConfigName } from '@/common/constants/config-name.constant';
 import { ServiceException } from '@/common/exceptions/service.exception';
-import { OTPType } from '@/entities/one-time-password.entity';
+import { DateUtils } from '@/common/helpers/date.utils';
+import { OTPType } from '@/entities/otp.entity';
 import { IJWTConfig } from '@/lib/config/configs/jwt.config';
 
 import { UserLoginDto } from './dto/user-login.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
-import { SendEmailProducerService } from '../email/producers/send-email.producer.service';
+import { AuthTokenService } from '../auth-token/auth-token.service';
+import { EmailProducerService } from '../email/producers/email.producer.service';
+import { JWTRepository } from '../jwt/jwt.repository';
 import { OTPService } from '../otp/otp.service';
-import { TokenService } from '../token/token.service';
 import { UserService } from '../user/user.service';
 
 @Injectable()
@@ -22,10 +24,11 @@ export class AuthService {
 
   constructor(
     private readonly userService: UserService,
-    private readonly tokenService: TokenService,
+    private readonly tokenService: AuthTokenService,
     private readonly configService: ConfigService,
-    private readonly emailProducerService: SendEmailProducerService,
+    private readonly emailProducerService: EmailProducerService,
     private readonly otpService: OTPService,
+    private readonly jwtRepo: JWTRepository,
   ) {
     this.jwtConfig = this.configService.get<IJWTConfig>(ConfigName.JWT);
   }
@@ -71,7 +74,7 @@ export class AuthService {
     return await this.tokenService.revokeToken(token, allDevices);
   }
 
-  public async register(data: UserRegisterDto) {
+  public async register(data: UserRegisterDto, userTimezone?: string) {
     const createdUser = await this.userService.create(data);
 
     if (createdUser.isErr()) {
@@ -93,7 +96,7 @@ export class AuthService {
 
     const {
       otp: { code, expiredOn },
-    } = await this.otpService.createOTP({
+    } = await this.otpService.generateOTP({
       userId: user.id,
       type: OTPType.VERIFY_EMAIL,
     });
@@ -102,7 +105,7 @@ export class AuthService {
       code: code,
       email: user.email,
       username: user.username,
-      expireDate: expiredOn.toUTCString(),
+      expireDate: DateUtils.formatTimezone(expiredOn, userTimezone),
     });
 
     const refreshToken = await this.tokenService.generateRefreshToken(
@@ -140,7 +143,7 @@ export class AuthService {
       }
     }
 
-    const decode = await this.tokenService.decode(token);
+    const decode = await this.jwtRepo.decode(token);
 
     const user = await this.userService.findOne({ id: decode.id });
 

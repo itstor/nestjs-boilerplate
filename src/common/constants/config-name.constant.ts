@@ -5,6 +5,6 @@ export const ConfigName = {
   THROTTLE: 'throttle-config',
   SMTP: 'smtp-config',
   KEY: 'key-config',
-  BULL: 'bull-config',
   SENTRY: 'sentry-config',
+  REDIS: 'redis-config',
 } as const;

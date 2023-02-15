@@ -6,6 +6,7 @@ import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { ConfigName } from '@/common/constants/config-name.constant';
 
 import { IAppEnvConfig } from '../config/configs/app.config';
+import { IRedisConfig } from '../config/configs/redis.config';
 import { IThrottleConfig } from '../config/configs/throttle.config';
 
 @Module({
@@ -17,13 +18,13 @@ import { IThrottleConfig } from '../config/configs/throttle.config';
         const throttleConfig = configService.get<IThrottleConfig>(
           ConfigName.THROTTLE,
         );
-
+        const redisConfig = configService.get<IRedisConfig>(ConfigName.REDIS);
         const appConfig = configService.get<IAppEnvConfig>(ConfigName.APP);
 
         return <ThrottlerModuleOptions>{
           ttl: throttleConfig?.ttl,
           limit: throttleConfig?.limit,
-          storage: new ThrottlerStorageRedisService(throttleConfig?.redis_url),
+          storage: new ThrottlerStorageRedisService(redisConfig?.redis_url),
           skipIf: () => !appConfig?.isProduction,
         };
       },

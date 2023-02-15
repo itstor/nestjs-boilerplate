@@ -5,7 +5,7 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 
 import { DefaultEntity } from './default.entity';
 import LinkedAccount from './linked-account.entity';
-import { OneTimePassword } from './one-time-password.entity';
+import { OTP } from './otp.entity';
 import { RefreshToken } from './resfresh-token.entity';
 
 export enum UserRole {
@@ -42,8 +42,8 @@ export class User extends DefaultEntity {
   @OneToMany(() => LinkedAccount, (linkedAccounts) => linkedAccounts.user)
   linkedAccounts?: LinkedAccount[];
 
-  @OneToMany(() => OneTimePassword, (otp) => otp.user)
-  oneTimePasswords?: OneTimePassword[];
+  @OneToMany(() => OTP, (otp) => otp.user)
+  oneTimePasswords?: OTP[];
 
   @BeforeInsert()
   @BeforeUpdate()

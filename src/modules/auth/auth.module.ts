@@ -8,18 +8,20 @@ import { User } from '@/entities/user.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { AuthTokenModule } from '../auth-token/auth-token.module';
 import { EmailModule } from '../email/email.module';
+import { JWTModule } from '../jwt/jwt.module';
 import { OTPModule } from '../otp/otp.module';
-import { TokenModule } from '../token/token.module';
 import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
-    TokenModule,
+    AuthTokenModule,
     UserModule,
     EmailModule,
     PassportModule,
     OTPModule,
+    JWTModule,
     TypeOrmModule.forFeature([User]),
   ],
   providers: [AuthService, ConfigService, JwtStrategy],

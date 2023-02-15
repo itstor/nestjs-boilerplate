@@ -4,14 +4,14 @@ import * as Joi from 'joi';
 import { ConfigName } from '@/common/constants/config-name.constant';
 import JoiEnvValidator, { JoiConfig } from '@/common/helpers/joi-env.utils';
 
-export interface IBullConfig {
+export interface IRedisConfig {
   redis_url: string;
 }
 
-export default registerAs(ConfigName.BULL, (): IBullConfig => {
-  const config: JoiConfig<IBullConfig> = {
+export default registerAs(ConfigName.REDIS, (): IRedisConfig => {
+  const config: JoiConfig<IRedisConfig> = {
     redis_url: {
-      value: process.env.BULL_REDIS_URL,
+      value: process.env.REDIS_URL,
       joi: Joi.string().required(),
     },
   };

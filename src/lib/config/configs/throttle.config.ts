@@ -7,7 +7,6 @@ import JoiEnvValidator, { JoiConfig } from '@/common/helpers/joi-env.utils';
 export interface IThrottleConfig {
   ttl: number;
   limit: number;
-  redis_url: string;
 }
 
 export default registerAs(ConfigName.THROTTLE, (): IThrottleConfig => {
@@ -19,10 +18,6 @@ export default registerAs(ConfigName.THROTTLE, (): IThrottleConfig => {
     limit: {
       value: parseInt(process.env.THROTTLE_LIMIT || '10', 10),
       joi: Joi.number().required(),
-    },
-    redis_url: {
-      value: process.env.THROTTLE_REDIS_URL,
-      joi: Joi.string().required(),
     },
   };
 

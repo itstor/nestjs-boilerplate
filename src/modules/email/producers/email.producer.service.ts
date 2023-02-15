@@ -7,7 +7,7 @@ import { EmailTemplate } from '@/common/constants/email-template.constant';
 import { ServiceException } from '@/common/exceptions/service.exception';
 
 @Injectable()
-export class SendEmailProducerService {
+export class EmailProducerService {
   private readonly logger = new Logger(this.constructor.name);
 
   constructor(@InjectQueue('sendMail') private queue: Queue) {}

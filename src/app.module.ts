@@ -14,11 +14,12 @@ import {
   TypeOrmModuleConfig,
 } from './lib';
 import { SessionConfigModule } from './lib/session/session.module';
-import { EmailModule, PingModule, UserModule } from './modules';
+import { EmailModule, UserModule } from './modules';
 import { AccountModule } from './modules/account/account.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AuthTokenModule } from './modules/auth-token/auth-token.module';
 import { GoogleOauthModule } from './modules/google-oauth/google-oauth.module';
-import { TokenModule } from './modules/token/token.module';
+import { HealthCheckModule } from './modules/health-check/health-check.module';
 
 @Module({
   imports: [
@@ -33,11 +34,11 @@ import { TokenModule } from './modules/token/token.module';
     ThrottlerConfigModule,
     SentryConfigModule,
     UserModule,
-    PingModule,
     AuthModule,
-    TokenModule,
+    AuthTokenModule,
     AccountModule,
     GoogleOauthModule,
+    HealthCheckModule,
   ],
   controllers: [],
   providers: [

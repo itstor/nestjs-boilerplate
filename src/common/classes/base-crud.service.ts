@@ -37,7 +37,7 @@ export class CRUDService<T extends DefaultEntity> {
 
     this.logger.error(e);
 
-    throw new CRUDException<T>('UNKNOWN', e);
+    return new CRUDException<T>('UNKNOWN', e);
   }
 
   /**

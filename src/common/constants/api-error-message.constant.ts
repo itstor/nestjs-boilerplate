@@ -52,6 +52,11 @@ export const ApiErrorMessage = {
     message: 'Wrong password',
     httpCode: HttpStatus.UNAUTHORIZED,
   },
+  WRONG_EMAIL_USERNAME: {
+    code: 'WRONG_EMAIL_USERNAME',
+    message: 'User not found with the given email or username',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
   USER_NOT_FOUND: {
     code: 'USER_NOT_FOUND',
     message: 'User not found',
@@ -77,6 +82,11 @@ export const ApiErrorMessage = {
     message: 'Invalid OTP',
     httpCode: HttpStatus.UNAUTHORIZED,
   },
+  INVALID_OTP_TOKEN: {
+    code: 'INVALID_OTP',
+    message: 'Invalid OTP token',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
   VERIFY_OTP_FIRST: {
     code: 'VERIFY_OTP_FIRST',
     message: 'Please verify your otp first',
@@ -86,5 +96,10 @@ export const ApiErrorMessage = {
     code: 'REQ_OTP_FIRST',
     message: 'Please request otp first',
     httpCode: HttpStatus.UNAUTHORIZED,
+  },
+  RESEND_OTP_NOT_ALLOWED: {
+    code: 'RESEND_OTP_NOT_ALLOWED',
+    message: 'You can resend OTP after 30 seconds',
+    httpCode: HttpStatus.TOO_MANY_REQUESTS,
   },
 } as const satisfies Record<string, IApiErrorMessage>;

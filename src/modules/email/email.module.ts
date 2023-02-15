@@ -1,8 +1,8 @@
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 
-import { SendEmailConsumer } from './consumers/send-email.consumer';
-import { SendEmailProducerService } from './producers/send-email.producer.service';
+import { SendEmailConsumer } from './consumers/email.consumer';
+import { EmailProducerService } from './producers/email.producer.service';
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { SendEmailProducerService } from './producers/send-email.producer.servic
       },
     }),
   ],
-  providers: [SendEmailProducerService, SendEmailConsumer],
-  exports: [SendEmailProducerService],
+  providers: [EmailProducerService, SendEmailConsumer],
+  exports: [EmailProducerService],
 })
 export class EmailModule {}

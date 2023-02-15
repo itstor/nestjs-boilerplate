@@ -4,6 +4,10 @@ import { IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 import { IsMatch } from '@/common/validators/is-match.decorator';
 
 export class ResetForgotPasswordDTO {
+  @ApiProperty()
+  @IsNotEmpty()
+  readonly token!: string;
+
   @ApiProperty({ minimum: 6, maximum: 128 })
   @MinLength(6)
   @MaxLength(128)

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as CryptoJS from 'crypto-js';
-import { nanoid } from 'nanoid';
 import {
   CookieSessionModule,
   NestCookieSessionOptions,
@@ -9,6 +8,7 @@ import {
 
 import { ConfigName } from '@/common/constants/config-name.constant';
 
+import { IAppEnvConfig } from '../config/configs/app.config';
 import { IKeyConfig } from '../config/configs/key.config';
 
 @Module({
@@ -21,12 +21,15 @@ import { IKeyConfig } from '../config/configs/key.config';
           configService.get<IKeyConfig>(ConfigName.KEY)?.sessionSecretKey ??
           CryptoJS.lib.WordArray.random(256 / 8).toString();
 
+        const appConfig = configService.get<IAppEnvConfig>(ConfigName.APP);
+
         return <NestCookieSessionOptions>{
           session: {
-            secret: secretKey,
-            resave: false,
-            saveUninitialized: false,
-            genid: () => nanoid(),
+            signed: true,
+            secure: appConfig?.isProduction,
+            keys: [secretKey],
+            httpOnly: appConfig?.isProduction,
+            sameSite: 'strict',
           },
         };
       },

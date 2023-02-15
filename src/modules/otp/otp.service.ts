@@ -6,15 +6,15 @@ import * as otpGenerator from 'otp-generator';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 
 import { CRUDService } from '@/common/classes/base-crud.service';
-import { OneTimePassword, OTPType } from '@/entities/one-time-password.entity';
+import { OTP, OTPType } from '@/entities/otp.entity';
 
 @Injectable()
-export class OTPService extends CRUDService<OneTimePassword> {
+export class OTPService extends CRUDService<OTP> {
   constructor(
-    @InjectRepository(OneTimePassword)
-    private readonly otpRepo: Repository<OneTimePassword>,
+    @InjectRepository(OTP)
+    private readonly otpRepo: Repository<OTP>,
   ) {
-    const paginationConfig: PaginateConfig<OneTimePassword> = {
+    const paginationConfig: PaginateConfig<OTP> = {
       sortableColumns: [
         'id',
         'isVerified',
@@ -38,7 +38,7 @@ export class OTPService extends CRUDService<OneTimePassword> {
    * @param lenght - OTP lenght (default: 4)
    * @returns
    */
-  public async createOTP({
+  public async generateOTP({
     userId,
     type,
     ttl = 300,
@@ -51,7 +51,7 @@ export class OTPService extends CRUDService<OneTimePassword> {
   }) {
     const code = otpGenerator.generate(length, {
       digits: true,
-      upperCaseAlphabets: false,
+      upperCaseAlphabets: true,
       specialChars: false,
       lowerCaseAlphabets: false,
     });
@@ -75,14 +75,15 @@ export class OTPService extends CRUDService<OneTimePassword> {
   public async verifyOTP(data: {
     code: string;
     type: OTPType;
+    otpId?: string;
     userId?: string;
   }) {
     const otp = await this.otpRepo.findOne({
       where: {
-        code: data.code,
         type: data.type,
         isVerified: false,
         expiredOn: MoreThanOrEqual(dayjs().toDate()),
+        ...(data.otpId ? { id: data.otpId } : {}),
         ...(data.userId ? { user: { id: data.userId } } : {}),
       },
       order: {
@@ -94,7 +95,12 @@ export class OTPService extends CRUDService<OneTimePassword> {
       return false;
     }
 
+    if (otp.code !== data.code) {
+      return false;
+    }
+
     otp.isVerified = true;
+
     await this.otpRepo.save(otp);
 
     return true;

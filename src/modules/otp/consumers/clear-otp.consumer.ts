@@ -12,25 +12,25 @@ import { Job } from 'bull';
 import * as dayjs from 'dayjs';
 import { LessThan, Repository } from 'typeorm';
 
-import { RefreshToken } from '@/entities/resfresh-token.entity';
+import { OTP } from '@/entities/otp.entity';
 
-@Processor('clearTokens')
-export class ClearTokenConsumer {
+@Processor('clearOTP')
+export class ClearOTPConsumer {
   private readonly logger = new Logger(this.constructor.name);
 
   constructor(
-    @InjectRepository(RefreshToken)
-    private readonly tokenRepo: Repository<RefreshToken>,
+    @InjectRepository(OTP)
+    private readonly otpRepo: Repository<OTP>,
   ) {}
 
   @OnQueueActive()
   onActive() {
-    this.logger.log('Deleting expired tokens from the database.');
+    this.logger.log('Deleting expired OTP from the database.');
   }
 
   @OnQueueCompleted()
   onComplete() {
-    this.logger.log('Successfully deleted expired tokens from the database.');
+    this.logger.log('Successfully deleted expired OTP from the database.');
   }
 
   @OnQueueFailed()
@@ -45,8 +45,8 @@ export class ClearTokenConsumer {
   @Process('clear-expired')
   async clearExpiredToken() {
     try {
-      await this.tokenRepo.delete({
-        expiredOn: LessThan(dayjs().toDate()),
+      await this.otpRepo.delete({
+        expiredOn: LessThan(dayjs().add(10, 'minute').toDate()), // Tolerate 10 minutes
       });
     } catch (error) {
       throw error;

@@ -53,7 +53,7 @@ export class AuthController {
 
       switch (error.name) {
         case 'USER_NOT_FOUND':
-          throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
+          throw APIError.fromMessage(ApiErrorMessage.WRONG_EMAIL_USERNAME);
         case 'WRONG_PASSWORD':
           throw APIError.fromMessage(ApiErrorMessage.WRONG_PASSWORD);
       }
@@ -113,9 +113,10 @@ export class AuthController {
   })
   async register(
     @Body() body: UserRegisterDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.register(body);
+    const result = await this.authService.register(body, req.cookies.tz);
 
     if (result.isErr()) {
       const error = result.error;

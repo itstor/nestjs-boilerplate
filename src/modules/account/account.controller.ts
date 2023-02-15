@@ -1,21 +1,26 @@
-import { Body, Controller, HttpCode, Post, Req, Session } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Put, Req } from '@nestjs/common';
 import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Request } from 'express';
 
 import { ApiErrorMessage } from '@/common/constants/api-error-message.constant';
+import { LoggedUser } from '@/common/decorators/logged-user.decorator';
+import { UseAuth } from '@/common/decorators/use-auth.decorator';
 import APIError from '@/common/exceptions/api-error.exception';
+import { User } from '@/entities/user.entity';
 
 import { AccountService } from './account.service';
 import { RecoverPasswordDTO } from './dto/recover-password.dto';
 import { ResetForgotPasswordDTO } from './dto/reset-forgot-password.dto';
+import { VerifyEmailDTO } from './dto/verify-email.dto';
 import { VerifyResetPasswordOTPDTO } from './dto/verify-reset-password-otp.dto';
-import { IForgotPasswordCookie } from './intefaces/forgot-password-cookie.interface';
 
 @Controller({
   path: 'account',
@@ -34,39 +39,33 @@ export class AccountController {
   @ApiTooManyRequestsResponse({
     description: 'Only 2 recover request per minute',
   })
-  async recover(
-    @Session() session: IForgotPasswordCookie,
-    @Req() req: { tz?: string },
-    @Body() body: RecoverPasswordDTO,
-  ) {
-    const result = await this.accountService.requestResetPassword(
+  async forgotPassword(@Req() req: Request, @Body() body: RecoverPasswordDTO) {
+    const result = await this.accountService.requestForgotPassword(
       body.email,
-      req.tz,
+      req.cookies.tz,
     );
 
     if (result.isErr()) {
       const error = result.error;
 
       switch (error.name) {
-        case 'USER_NOT_FOUND':
+        case 'EMAIL_NOT_FOUND':
           throw APIError.fromMessage(ApiErrorMessage.WRONG_EMAIL);
+        case 'RESEND_OTP_NOT_ALLOWED':
+          throw APIError.fromMessage(ApiErrorMessage.RESEND_OTP_NOT_ALLOWED);
       }
     }
 
     const {
-      otp: { id, expiredOn },
+      otp: { expiredOn },
+      token,
       ttl,
       allowResendIn,
     } = result.value;
 
-    session.fpass = {
-      id,
-      verified: false,
-      email: body.email,
-    };
-
     return {
       message: 'Recover password email sent',
+      token,
       expiredOn: expiredOn,
       ttl: ttl,
       allowResendIn: allowResendIn,
@@ -76,27 +75,25 @@ export class AccountController {
   @Post('forgot-password/verify')
   @HttpCode(200)
   @ApiOperation({ operationId: 'Verify Recover User Account' })
-  @ApiNotFoundResponse({ description: 'User not found' })
-  @ApiOkResponse({ description: 'Success message' })
-  async verifyRecover(
-    @Session()
-    session: IForgotPasswordCookie,
-    @Body() body: VerifyResetPasswordOTPDTO,
-  ) {
-    if (!session.fpass) {
-      throw APIError.fromMessage(ApiErrorMessage.REQ_OTP_FIRST);
+  @ApiUnauthorizedResponse({ description: 'Invalid OTP' })
+  @ApiOkResponse({ description: 'OTP Verified' })
+  async verifyResetOTP(@Body() body: VerifyResetPasswordOTPDTO) {
+    const isValid = await this.accountService.verifyResetPasswordOTP(body);
+
+    if (isValid.isErr()) {
+      const error = isValid.error;
+
+      switch (error.name) {
+        case 'OTP_INVALID':
+          throw APIError.fromMessage(ApiErrorMessage.INVALID_OTP);
+        case 'TOKEN_INVALID':
+          throw APIError.fromMessage(ApiErrorMessage.INVALID_OTP_TOKEN);
+      }
     }
-
-    const isVerified = await this.accountService.verifyResetPasswordOTP(body);
-
-    if (!isVerified) {
-      throw APIError.fromMessage(ApiErrorMessage.INVALID_OTP);
-    }
-
-    session.fpass.verified = true;
 
     return {
       message: 'OTP verified',
+      token: body.token,
     };
   }
 
@@ -105,17 +102,9 @@ export class AccountController {
   @ApiOperation({ operationId: 'Reset User Account Password' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiOkResponse({ description: 'Success message' })
-  async resetPassword(
-    @Session()
-    session: IForgotPasswordCookie,
-    @Body() body: ResetForgotPasswordDTO,
-  ) {
-    if (!session.fpass?.verified) {
-      throw APIError.fromMessage(ApiErrorMessage.VERIFY_OTP_FIRST);
-    }
-
+  async resetPassword(@Body() body: ResetForgotPasswordDTO) {
     const result = await this.accountService.resetPassword({
-      otpId: session.fpass.id,
+      token: body.token,
       password: body.password,
     });
 
@@ -123,17 +112,65 @@ export class AccountController {
       const error = result.error;
 
       switch (error.name) {
-        case 'USER_NOT_FOUND':
-          throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
         case 'OTP_NOT_FOUND':
-          throw APIError.fromMessage(ApiErrorMessage.INVALID_OTP);
+        case 'TOKEN_INVALID':
+          throw APIError.fromMessage(ApiErrorMessage.INVALID_OTP_TOKEN);
+        case 'OTP_NOT_VERIFIED':
+          throw APIError.fromMessage(ApiErrorMessage.VERIFY_OTP_FIRST);
       }
     }
-
-    session.fpass = null;
 
     return {
       message: 'Password reset success',
     };
+  }
+
+  @Post('email/send-verification')
+  @UseAuth()
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'Request Email Verification' })
+  @ApiOkResponse({ description: 'Success message' })
+  async sendEmailVerification(@Req() req: Request, @LoggedUser() user: User) {
+    const result = await this.accountService.sendEmailVerification(
+      user,
+      req.cookies.tz,
+    );
+
+    if (result.isErr()) {
+      const error = result.error;
+
+      switch (error.name) {
+        case 'RESEND_OTP_NOT_ALLOWED':
+          throw APIError.fromMessage(ApiErrorMessage.RESEND_OTP_NOT_ALLOWED);
+      }
+    }
+
+    const { allowResendIn } = result.value;
+
+    return {
+      message: 'Email verification sent',
+      allowResendIn,
+    };
+  }
+
+  @Post('email/verify')
+  @UseAuth()
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'Verify Email' })
+  @ApiOkResponse({ description: 'Success message' })
+  async verifyEmail(@Body() body: VerifyEmailDTO, @LoggedUser() user: User) {
+    await this.accountService.verifyEmail(user, body.otp);
+
+    return {
+      message: 'Email verified',
+    };
+  }
+
+  @Put('email')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'Update Email' })
+  @ApiOkResponse({ description: 'Success message' })
+  async updateEmail(@Req() req: Request) {
+    return;
   }
 }
