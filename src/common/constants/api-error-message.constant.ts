@@ -62,6 +62,11 @@ export const ApiErrorMessage = {
     message: 'User not found',
     httpCode: HttpStatus.NOT_FOUND,
   },
+  USER_NOT_VERIFIED: {
+    code: 'USER_NOT_VERIFIED',
+    message: 'User is not verified, please verify your email',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
   USERNAME_EXISTS: {
     code: 'USERNAME_EXISTS',
     message: 'Username already exists',
