@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post, Put, Req } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Req } from '@nestjs/common';
 import {
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -19,6 +19,9 @@ import { User } from '@/entities/user.entity';
 import { AccountService } from './account.service';
 import { RecoverPasswordDTO } from './dto/recover-password.dto';
 import { ResetForgotPasswordDTO } from './dto/reset-forgot-password.dto';
+import { UpdateEmailDTO } from './dto/update-email.dto';
+import { UpdatePasswordDTO } from './dto/update-password.dto';
+import { UpdateUsernamelDTO } from './dto/update-username.dto';
 import { VerifyEmailDTO } from './dto/verify-email.dto';
 import { VerifyResetPasswordOTPDTO } from './dto/verify-reset-password-otp.dto';
 
@@ -30,7 +33,15 @@ import { VerifyResetPasswordOTPDTO } from './dto/verify-reset-password-otp.dto';
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
-  @Post('forgot-password')
+  @Get('me')
+  @UseAuth()
+  @ApiOperation({ operationId: 'Get User Info' })
+  @ApiOkResponse({ description: 'User Info' })
+  async getMe(@LoggedUser() user: User) {
+    return user;
+  }
+
+  @Post('password/forgot')
   @Throttle(2, 60) // 2 recover request per minute
   @HttpCode(200)
   @ApiOperation({ operationId: 'Forgot Password' })
@@ -72,7 +83,7 @@ export class AccountController {
     };
   }
 
-  @Post('forgot-password/verify')
+  @Post('password/forgot/verify')
   @HttpCode(200)
   @ApiOperation({ operationId: 'Verify Recover User Account' })
   @ApiUnauthorizedResponse({ description: 'Invalid OTP' })
@@ -97,7 +108,7 @@ export class AccountController {
     };
   }
 
-  @Post('forgot-password/reset')
+  @Post('password/forgot/reset')
   @HttpCode(200)
   @ApiOperation({ operationId: 'Reset User Account Password' })
   @ApiNotFoundResponse({ description: 'User not found' })
@@ -142,6 +153,8 @@ export class AccountController {
       switch (error.name) {
         case 'RESEND_OTP_NOT_ALLOWED':
           throw APIError.fromMessage(ApiErrorMessage.RESEND_OTP_NOT_ALLOWED);
+        case 'EMAIL_ALREADY_VERIFIED':
+          throw APIError.fromMessage(ApiErrorMessage.EMAIL_ALREADY_VERIFIED);
       }
     }
 
@@ -159,18 +172,107 @@ export class AccountController {
   @ApiOperation({ operationId: 'Verify Email' })
   @ApiOkResponse({ description: 'Success message' })
   async verifyEmail(@Body() body: VerifyEmailDTO, @LoggedUser() user: User) {
-    await this.accountService.verifyEmail(user, body.otp);
+    const result = await this.accountService.verifyEmail(user, body.otp);
 
-    return {
-      message: 'Email verified',
-    };
+    if (result.isErr()) {
+      const error = result.error;
+
+      switch (error.name) {
+        case 'OTP_INVALID':
+          throw APIError.fromMessage(ApiErrorMessage.INVALID_OTP);
+        case 'EMAIL_ALREADY_VERIFIED':
+          throw APIError.fromMessage(ApiErrorMessage.EMAIL_ALREADY_VERIFIED);
+      }
+
+      throw APIError.fromMessage(ApiErrorMessage.OPERATION_FAILED, error.cause);
+    }
+
+    return result.value;
   }
 
-  @Put('email')
+  @Post('email')
+  @UseAuth()
   @HttpCode(200)
   @ApiOperation({ operationId: 'Update Email' })
   @ApiOkResponse({ description: 'Success message' })
-  async updateEmail(@Req() req: Request) {
-    return;
+  async updateEmail(@Body() body: UpdateEmailDTO, @LoggedUser() user: User) {
+    const updatedUser = await this.accountService.updateEmail(
+      user,
+      body.newEmail,
+    );
+
+    if (updatedUser.isErr()) {
+      const error = updatedUser.error;
+
+      switch (error.name) {
+        case 'EMAIL_EXISTS':
+          throw APIError.fromMessage(ApiErrorMessage.EMAIL_EXISTS);
+        case 'EMAIL_SAME':
+          throw APIError.fromMessage(ApiErrorMessage.EMAIL_SAME_AS_OLD);
+      }
+
+      throw APIError.fromMessage(ApiErrorMessage.OPERATION_FAILED, error.cause);
+    }
+
+    return updatedUser.value;
+  }
+
+  @Post('username')
+  @UseAuth()
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'Update Username' })
+  @ApiOkResponse({ description: 'Updated User' })
+  async updateUsername(
+    @LoggedUser() user: User,
+    @Body() body: UpdateUsernamelDTO,
+  ) {
+    const updatedUser = await this.accountService.updateUsername(
+      user,
+      body.newUsername,
+    );
+
+    if (updatedUser.isErr()) {
+      const error = updatedUser.error;
+
+      switch (error.name) {
+        case 'USERNAME_EXISTS':
+          throw APIError.fromMessage(ApiErrorMessage.USERNAME_EXISTS);
+        case 'USERNAME_SAME_AS_OLD':
+          throw APIError.fromMessage(ApiErrorMessage.USERNAME_SAME_AS_OLD);
+      }
+
+      throw APIError.fromMessage(ApiErrorMessage.OPERATION_FAILED, error.cause);
+    }
+
+    return updatedUser.value;
+  }
+
+  @Post('password')
+  @UseAuth()
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'Update Password' })
+  @ApiOkResponse({ description: 'Updated User' })
+  async updatePassword(
+    @LoggedUser() user: User,
+    @Body() body: UpdatePasswordDTO,
+  ) {
+    const result = await this.accountService.updatePassword(
+      user.id,
+      body.oldPassword,
+      body.newPassword,
+    );
+
+    if (result.isErr()) {
+      const error = result.error;
+
+      switch (error.name) {
+        case 'PASSWORD_NOT_MATCH':
+          throw APIError.fromMessage(ApiErrorMessage.WRONG_PASSWORD);
+      }
+
+      throw APIError.fromMessage(ApiErrorMessage.OPERATION_FAILED, error.cause);
+    }
+
+    return result.value;
   }
 }

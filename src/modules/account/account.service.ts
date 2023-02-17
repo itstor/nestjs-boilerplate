@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as argon2 from 'argon2';
 import * as dayjs from 'dayjs';
 import { err, ok } from 'neverthrow';
 
@@ -145,7 +146,8 @@ export class AccountService {
       return err(new ServiceException('OTP_NOT_VERIFIED'));
     }
 
-    await this.changePassword(userId, data.password);
+    // Change the password
+    await this.userService.update(userId, { password: data.password });
 
     // Delete the OTP after reset password
     await this.otpService.delete({ id: otp.id });
@@ -153,14 +155,14 @@ export class AccountService {
     return ok(true);
   }
 
-  public async changePassword(userId: string, password: string) {
-    return await this.userService.update(userId, { password: password });
-  }
-
   public async sendEmailVerification(
-    user: Pick<User, 'id' | 'email' | 'username'>,
+    user: Pick<User, 'id' | 'email' | 'username' | 'isVerified'>,
     userTimezone?: string,
   ) {
+    if (user.isVerified) {
+      return err(new ServiceException('EMAIL_ALREADY_VERIFIED'));
+    }
+
     const previousOTP = await this.otpService.findOne(
       {
         user: { id: user.id },
@@ -208,7 +210,11 @@ export class AccountService {
     });
   }
 
-  public async verifyEmail(user: User, otp: string) {
+  public async verifyEmail(user: Pick<User, 'id' | 'isVerified'>, otp: string) {
+    if (user.isVerified) {
+      return err(new ServiceException('EMAIL_ALREADY_VERIFIED'));
+    }
+
     const isValid = await this.otpService.verifyOTP({
       code: otp,
       type: OTPType.VERIFY_EMAIL,
@@ -219,33 +225,109 @@ export class AccountService {
       return err(new ServiceException('OTP_INVALID'));
     }
 
-    this.userService.update(user.id, { isVerified: true });
+    const verifiedUser = await this.userService.update(user.id, {
+      isVerified: true,
+    });
 
-    return ok(isValid);
+    if (verifiedUser.isErr()) {
+      return err(
+        new ServiceException('VERIFY_EMAIL_FAILED', verifiedUser.error.cause),
+      );
+    }
+
+    return ok(verifiedUser.value);
   }
 
   public async updateEmail(user: Pick<User, 'email' | 'id'>, newEmail: string) {
-    const userEntity = await this.userService.findOne({ id: user.id });
+    const userResult = await this.userService.findOne({ id: user.id });
 
-    if (!userEntity) {
+    if (!userResult) {
       return err(new ServiceException('USER_NOT_FOUND'));
     }
 
-    await this.userService.update(user.id, {
+    if (userResult.email === newEmail) {
+      return err(new ServiceException('EMAIL_SAME'));
+    }
+
+    const updatedUser = await this.userService.update(user.id, {
       email: newEmail,
       isVerified: false,
     });
 
-    const { otp } = await this.otpService.generateOTP({
-      userId: user.id,
-      type: OTPType.VERIFY_EMAIL,
+    if (updatedUser.isErr()) {
+      const error = updatedUser.error;
+
+      if (error.name === 'EXISTS') {
+        return err(new ServiceException('EMAIL_EXISTS'));
+      }
+
+      return err(new ServiceException('UPDATE_EMAIL_FAILED', error.cause));
+    }
+
+    // If user update email successfully, delete all OTPs of that user
+    await this.otpService.delete({ user: { id: user.id } });
+
+    return ok(updatedUser.value);
+  }
+
+  public async updateUsername(
+    user: Pick<User, 'id' | 'username'>,
+    username: string,
+  ) {
+    const userResult = await this.userService.findOne({ id: user.id });
+
+    if (!userResult) {
+      return err(new ServiceException('USER_NOT_FOUND'));
+    }
+
+    if (userResult.username === username) {
+      return err(new ServiceException('USERNAME_SAME_AS_OLD'));
+    }
+
+    const updatedUser = await this.userService.update(user.id, {
+      username,
     });
 
-    await this.emailService.sendVerificationEmail({
-      code: otp.code,
-      email: newEmail,
-      username: userEntity.username,
-      expireDate: DateUtils.formatTimezone(otp.expiredOn),
+    if (updatedUser.isErr()) {
+      const error = updatedUser.error;
+
+      if (error.name === 'EXISTS') {
+        return err(new ServiceException('USERNAME_EXISTS'));
+      }
+
+      return err(new ServiceException('UPDATE_USERNAME_FAILED', error.cause));
+    }
+
+    return ok(updatedUser.value);
+  }
+
+  public async updatePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.userService.findOne({ id: userId });
+
+    if (!user) {
+      return err(new ServiceException('USER_NOT_FOUND'));
+    }
+
+    const isPasswordMatch = await argon2.verify(user.password, oldPassword);
+
+    if (!isPasswordMatch) {
+      return err(new ServiceException('PASSWORD_NOT_MATCH'));
+    }
+
+    const updatedUser = await this.userService.update(user.id, {
+      password: newPassword,
     });
+
+    if (updatedUser.isErr()) {
+      return err(
+        new ServiceException('CHANGE_PASSWORD_FAILED', updatedUser.error.cause),
+      );
+    }
+
+    return ok(updatedUser.value);
   }
 }

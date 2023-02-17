@@ -67,6 +67,11 @@ export const ApiErrorMessage = {
     message: 'Username already exists',
     httpCode: HttpStatus.CONFLICT,
   },
+  USERNAME_SAME_AS_OLD: {
+    code: 'USERNAME_SAME_AS_OLD',
+    message: 'New username is same as old username',
+    httpCode: HttpStatus.BAD_REQUEST,
+  },
   EMAIL_EXISTS: {
     code: 'EMAIL_EXISTS',
     message: 'Email already exists',
@@ -76,6 +81,16 @@ export const ApiErrorMessage = {
     code: 'EMAIL_NOT_SENT',
     message: 'Cannot send email',
     httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  EMAIL_SAME_AS_OLD: {
+    code: 'EMAIL_SAME_AS_OLD',
+    message: 'New email is same as old email',
+    httpCode: HttpStatus.BAD_REQUEST,
+  },
+  EMAIL_ALREADY_VERIFIED: {
+    code: 'EMAIL_ALREADY_VERIFIED',
+    message: 'Email already verified',
+    httpCode: HttpStatus.BAD_REQUEST,
   },
   INVALID_OTP: {
     code: 'INVALID_OTP',
@@ -101,5 +116,10 @@ export const ApiErrorMessage = {
     code: 'RESEND_OTP_NOT_ALLOWED',
     message: 'You can resend OTP after 30 seconds',
     httpCode: HttpStatus.TOO_MANY_REQUESTS,
+  },
+  OPERATION_FAILED: {
+    code: 'OPERATION_FAILED',
+    message: 'Operation failed',
+    httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 } as const satisfies Record<string, IApiErrorMessage>;
