@@ -7,4 +7,5 @@ export const ConfigName = {
   KEY: 'key-config',
   SENTRY: 'sentry-config',
   REDIS: 'redis-config',
+  OAUTH: 'oauth-config',
 } as const;
