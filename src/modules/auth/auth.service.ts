@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as argon2 from 'argon2';
 import * as Joi from 'joi';
 import { err, ok } from 'neverthrow';
 
 import { ConfigName } from '@/common/constants/config-name.constant';
 import { ServiceException } from '@/common/exceptions/service.exception';
 import { DateUtils } from '@/common/helpers/date.utils';
+import { HashUtils } from '@/common/helpers/hash.utils';
 import { OTPType } from '@/entities/otp.entity';
 import { IJWTConfig } from '@/lib/config/configs/jwt.config';
 
@@ -49,7 +49,12 @@ export class AuthService {
       return err(new ServiceException('USER_NOT_FOUND'));
     }
 
-    if (!(await argon2.verify(user.password, data.password))) {
+    const isPasswordCorrect = await HashUtils.comparePassword(
+      user.password,
+      data.password,
+    );
+
+    if (!isPasswordCorrect) {
       return err(new ServiceException('WRONG_PASSWORD'));
     }
 

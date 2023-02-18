@@ -1,7 +1,8 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import * as argon2 from 'argon2';
 import { Exclude } from 'class-transformer';
 import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
+
+import { HashUtils } from '@/common/helpers/hash.utils';
 
 import { DefaultEntity } from './default.entity';
 import LinkedAccount from './linked-account.entity';
@@ -48,8 +49,6 @@ export class User extends DefaultEntity {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
-    this.password = await argon2.hash(this.password, {
-      type: argon2.argon2id,
-    });
+    this.password = await HashUtils.hashPassword(this.password);
   }
 }

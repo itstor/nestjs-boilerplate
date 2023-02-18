@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import * as argon2 from 'argon2';
 import * as dayjs from 'dayjs';
 import { err, ok } from 'neverthrow';
 
 import { ServiceException } from '@/common/exceptions/service.exception';
 import { DateUtils } from '@/common/helpers/date.utils';
+import { HashUtils } from '@/common/helpers/hash.utils';
 import { OTPType } from '@/entities/otp.entity';
 import { User } from '@/entities/user.entity';
 
@@ -312,7 +312,10 @@ export class AccountService {
       return err(new ServiceException('USER_NOT_FOUND'));
     }
 
-    const isPasswordMatch = await argon2.verify(user.password, oldPassword);
+    const isPasswordMatch = await HashUtils.comparePassword(
+      user.password,
+      oldPassword,
+    );
 
     if (!isPasswordMatch) {
       return err(new ServiceException('PASSWORD_NOT_MATCH'));
