@@ -19,8 +19,10 @@ import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 
 import { ApiErrorMessage } from '@/common/constants/api-error-message.constant';
+import { CookieName } from '@/common/constants/cookie-name.constant';
 import { UseAuth } from '@/common/decorators/use-auth.decorator';
 import APIError from '@/common/exceptions/api-error.exception';
+import { CookieUtils } from '@/common/helpers/cookie.utils';
 
 import { AuthService } from './auth.service';
 import { UserLoginDto } from './dto/user-login.dto';
@@ -61,12 +63,11 @@ export class AuthController {
 
     const loginData = result.value;
 
-    res.cookie('_rtoken', loginData.refresh.token, {
-      httpOnly: true,
-      expires: loginData.refresh.expires,
-      sameSite: 'strict',
-      secure: true,
-    });
+    res.cookie(
+      CookieName.REFRESH_TOKEN,
+      loginData.refresh.token,
+      CookieUtils.getCookieSettings(loginData.refresh.expires),
+    );
 
     return {
       user: loginData.user,
@@ -94,7 +95,8 @@ export class AuthController {
 
     await this.authService.logout(token);
 
-    res.clearCookie('_rtoken');
+    // clear cookies
+    res.clearCookie(CookieName.REFRESH_TOKEN);
     req.session = null;
 
     return {
@@ -136,14 +138,15 @@ export class AuthController {
       );
     }
 
+    // Unpack result
     const registerData = result.value;
 
-    res.cookie('_rtoken', registerData.refresh.token, {
-      httpOnly: true,
-      expires: registerData.refresh.expires,
-      sameSite: 'strict',
-      secure: true,
-    });
+    // set refresh token cookie
+    res.cookie(
+      CookieName.REFRESH_TOKEN,
+      registerData.refresh.token,
+      CookieUtils.getCookieSettings(registerData.refresh.expires),
+    );
 
     return {
       user: registerData.user,
@@ -214,7 +217,7 @@ export class AuthController {
 
     await this.authService.logout(token, true);
 
-    res.clearCookie('_rtoken');
+    res.clearCookie(CookieName.REFRESH_TOKEN);
 
     return {
       message: 'Logout successful',
