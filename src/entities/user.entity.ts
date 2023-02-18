@@ -35,7 +35,7 @@ export class User extends DefaultEntity {
 
   @Column({ default: false })
   @ApiProperty()
-  isVerified: boolean;
+  isEmailVerified: boolean;
 
   @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshTokens?: RefreshToken[];

@@ -156,10 +156,10 @@ export class AccountService {
   }
 
   public async sendEmailVerification(
-    user: Pick<User, 'id' | 'email' | 'username' | 'isVerified'>,
+    user: Pick<User, 'id' | 'email' | 'username' | 'isEmailVerified'>,
     userTimezone?: string,
   ) {
-    if (user.isVerified) {
+    if (user.isEmailVerified) {
       return err(new ServiceException('EMAIL_ALREADY_VERIFIED'));
     }
 
@@ -210,8 +210,11 @@ export class AccountService {
     });
   }
 
-  public async verifyEmail(user: Pick<User, 'id' | 'isVerified'>, otp: string) {
-    if (user.isVerified) {
+  public async verifyEmail(
+    user: Pick<User, 'id' | 'isEmailVerified'>,
+    otp: string,
+  ) {
+    if (user.isEmailVerified) {
       return err(new ServiceException('EMAIL_ALREADY_VERIFIED'));
     }
 
@@ -226,7 +229,7 @@ export class AccountService {
     }
 
     const verifiedUser = await this.userService.update(user.id, {
-      isVerified: true,
+      isEmailVerified: true,
     });
 
     if (verifiedUser.isErr()) {
@@ -251,7 +254,7 @@ export class AccountService {
 
     const updatedUser = await this.userService.update(user.id, {
       email: newEmail,
-      isVerified: false,
+      isEmailVerified: false,
     });
 
     if (updatedUser.isErr()) {
