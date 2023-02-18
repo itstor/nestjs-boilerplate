@@ -87,7 +87,7 @@ export class AuthController {
     description: 'User is not logged in',
   })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const token = req.cookies._rtoken;
+    const token = CookieUtils.getRefreshTokenCookie(req);
 
     if (!token) {
       throw APIError.fromMessage(ApiErrorMessage.UNAUTHORIZED);
@@ -166,7 +166,7 @@ export class AuthController {
     description: 'User is not logged in',
   })
   async refresh(@Req() req: Request) {
-    const token = req.cookies._rtoken;
+    const token = CookieUtils.getRefreshTokenCookie(req);
 
     if (!token) {
       throw APIError.fromMessage(ApiErrorMessage.UNAUTHORIZED);
@@ -209,7 +209,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const token = req.cookies._rtoken;
+    const token = CookieUtils.getRefreshTokenCookie(req);
 
     if (!token) {
       throw APIError.fromMessage(ApiErrorMessage.UNAUTHORIZED);

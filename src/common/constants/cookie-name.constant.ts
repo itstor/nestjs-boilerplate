@@ -1,3 +1,3 @@
 export const CookieName = {
-  REFRESH_TOKEN: 'session_rtoken',
+  REFRESH_TOKEN: 'auth_rtoken',
 } as const;
