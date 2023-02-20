@@ -1,4 +1,4 @@
-# NestJS Boilerplate (WIP)
+# NestJS Boilerplate (WIP
 
 ## Features
 
