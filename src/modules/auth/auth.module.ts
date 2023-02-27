@@ -12,6 +12,7 @@ import { AuthTokenModule } from '../auth-token/auth-token.module';
 import { EmailModule } from '../email/email.module';
 import { JWTModule } from '../jwt/jwt.module';
 import { OTPModule } from '../otp/otp.module';
+import { SocialAccountModule } from '../social-account/social-account.module';
 import { UserModule } from '../user/user.module';
 
 @Module({
@@ -22,6 +23,7 @@ import { UserModule } from '../user/user.module';
     PassportModule,
     OTPModule,
     JWTModule,
+    SocialAccountModule,
     TypeOrmModule.forFeature([User]),
   ],
   providers: [AuthService, ConfigService, JwtStrategy],

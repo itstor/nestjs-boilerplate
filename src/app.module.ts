@@ -13,6 +13,7 @@ import {
   ThrottlerConfigModule,
   TypeOrmModuleConfig,
 } from './lib';
+import { RedisNestModule } from './lib/redis/redis.module';
 import { SessionConfigModule } from './lib/session/session.module';
 import { EmailModule, UserModule } from './modules';
 import { AccountModule } from './modules/account/account.module';
@@ -20,6 +21,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AuthTokenModule } from './modules/auth-token/auth-token.module';
 import { GoogleOauthModule } from './modules/google-oauth/google-oauth.module';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
+import { SocialAccountModule } from './modules/social-account/social-account.module';
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { HealthCheckModule } from './modules/health-check/health-check.module';
     BullNestModule,
     NodeMailerConfigModule,
     JWTConfigModule,
+    RedisNestModule,
     EmailModule,
     ThrottlerConfigModule,
     SentryConfigModule,
@@ -37,7 +40,8 @@ import { HealthCheckModule } from './modules/health-check/health-check.module';
     AuthModule,
     AuthTokenModule,
     AccountModule,
-    GoogleOauthModule,
+    SocialAccountModule,
+    // GoogleOauthModule,
     HealthCheckModule,
   ],
   controllers: [],

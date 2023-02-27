@@ -306,8 +306,8 @@ export class AccountService {
 
   public async updatePassword(
     userId: string,
-    oldPassword: string,
     newPassword: string,
+    oldPassword?: string,
   ) {
     const user = await this.userService.findOne({ id: userId });
 
@@ -315,13 +315,20 @@ export class AccountService {
       return err(new ServiceException('USER_NOT_FOUND'));
     }
 
-    const isPasswordMatch = await HashUtils.comparePassword(
-      user.password,
-      oldPassword,
-    );
+    // This check is for user who has linked password before. If user has linked password before, we need to check old password
+    if (user.password !== null) {
+      if (!oldPassword) {
+        return err(new ServiceException('OLD_PASSWORD_REQUIRED'));
+      }
 
-    if (!isPasswordMatch) {
-      return err(new ServiceException('PASSWORD_NOT_MATCH'));
+      const isPasswordMatch = await HashUtils.comparePassword(
+        user.password,
+        oldPassword,
+      );
+
+      if (!isPasswordMatch) {
+        return err(new ServiceException('PASSWORD_NOT_MATCH'));
+      }
     }
 
     const updatedUser = await this.userService.update(user.id, {
@@ -335,5 +342,15 @@ export class AccountService {
     }
 
     return ok(updatedUser.value);
+  }
+
+  public async checkLinkedPassword(userId: string) {
+    const user = await this.userService.findOne({ id: userId });
+
+    if (!user) {
+      return err(new ServiceException('USER_NOT_FOUND'));
+    }
+
+    return ok(user.password !== null);
   }
 }

@@ -3,9 +3,10 @@ import { Exclude } from 'class-transformer';
 import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 
 import { HashUtils } from '@/common/helpers/hash.utils';
+import { AuthProvider } from '@/common/types/enums/auth-provider.enum';
 
 import { DefaultEntity } from './default.entity';
-import LinkedAccount from './linked-account.entity';
+import SocialAccount from './linked-account.entity';
 import { OTP } from './otp.entity';
 import { RefreshToken } from './resfresh-token.entity';
 
@@ -24,10 +25,10 @@ export class User extends DefaultEntity {
   @ApiProperty()
   username: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   @Exclude({ toPlainOnly: true })
   @ApiHideProperty()
-  password: string;
+  password: string | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   @ApiProperty()
@@ -37,11 +38,18 @@ export class User extends DefaultEntity {
   @ApiProperty()
   isEmailVerified: boolean;
 
+  @Column({
+    type: 'enum',
+    enum: AuthProvider,
+    default: AuthProvider.LOCAL,
+  })
+  signUpMethod: AuthProvider;
+
   @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshTokens?: RefreshToken[];
 
-  @OneToMany(() => LinkedAccount, (linkedAccounts) => linkedAccounts.user)
-  linkedAccounts?: LinkedAccount[];
+  @OneToMany(() => SocialAccount, (socialAccounts) => socialAccounts.user)
+  socialAccounts?: SocialAccount[];
 
   @OneToMany(() => OTP, (otp) => otp.user)
   oneTimePasswords?: OTP[];
@@ -49,6 +57,8 @@ export class User extends DefaultEntity {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
-    this.password = await HashUtils.hashPassword(this.password);
+    if (this.password) {
+      this.password = await HashUtils.hashPassword(this.password);
+    }
   }
 }

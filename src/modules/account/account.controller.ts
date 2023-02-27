@@ -136,6 +136,33 @@ export class AccountController {
     };
   }
 
+  @Get('password/linked')
+  @UseAuth()
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'Check Linked Password',
+    description:
+      'Check if user has been linked their password. This supposed to be called to determine change password flow.',
+  })
+  async checkLinkedPassword(@LoggedUser() user: User) {
+    const result = await this.accountService.checkLinkedPassword(user.id);
+
+    if (result.isErr()) {
+      const error = result.error;
+
+      switch (error.name) {
+        case 'USER_NOT_FOUND':
+          throw APIError.fromMessage(ApiErrorMessage.USER_NOT_FOUND);
+      }
+    }
+
+    const isLinked = result.value;
+
+    return {
+      linked: isLinked,
+    };
+  }
+
   @Post('email/send-verification')
   @UseAuth()
   @HttpCode(200)
@@ -258,8 +285,8 @@ export class AccountController {
   ) {
     const result = await this.accountService.updatePassword(
       user.id,
-      body.oldPassword,
       body.newPassword,
+      body.oldPassword,
     );
 
     if (result.isErr()) {
@@ -268,6 +295,8 @@ export class AccountController {
       switch (error.name) {
         case 'PASSWORD_NOT_MATCH':
           throw APIError.fromMessage(ApiErrorMessage.WRONG_PASSWORD);
+        case 'OLD_PASSWORD_REQUIRED':
+          throw APIError.fromMessage(ApiErrorMessage.OLD_PASSWORD_REQUIRED);
       }
 
       throw APIError.fromMessage(ApiErrorMessage.OPERATION_FAILED, error.cause);

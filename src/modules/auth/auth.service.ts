@@ -7,6 +7,7 @@ import { ConfigName } from '@/common/constants/config-name.constant';
 import { ServiceException } from '@/common/exceptions/service.exception';
 import { DateUtils } from '@/common/helpers/date.utils';
 import { HashUtils } from '@/common/helpers/hash.utils';
+import { AuthProvider } from '@/common/types/enums/auth-provider.enum';
 import { OTPType } from '@/entities/otp.entity';
 import { IJWTConfig } from '@/lib/config/configs/jwt.config';
 
@@ -16,6 +17,7 @@ import { AuthTokenService } from '../auth-token/auth-token.service';
 import { EmailProducerService } from '../email/producers/email.producer.service';
 import { JWTRepository } from '../jwt/jwt.repository';
 import { OTPService } from '../otp/otp.service';
+import { SocialAccountService } from '../social-account/social-account.service';
 import { UserService } from '../user/user.service';
 
 @Injectable()
@@ -29,6 +31,7 @@ export class AuthService {
     private readonly emailProducerService: EmailProducerService,
     private readonly otpService: OTPService,
     private readonly jwtRepo: JWTRepository,
+    private readonly socialAccountService: SocialAccountService,
   ) {
     this.jwtConfig = this.configService.get<IJWTConfig>(ConfigName.JWT);
   }
@@ -47,6 +50,15 @@ export class AuthService {
 
     if (!user) {
       return err(new ServiceException('USER_NOT_FOUND'));
+    }
+
+    // Check if user is registered with another method
+    if (user.signUpMethod !== AuthProvider.LOCAL && user.password === null) {
+      return err(new ServiceException('USER_PASSWORD_NOT_SET'));
+    }
+
+    if (user.password === null) {
+      return err(new ServiceException('UNKNOWN'));
     }
 
     const isPasswordCorrect = await HashUtils.comparePassword(
@@ -159,5 +171,105 @@ export class AuthService {
     const accessToken = await this.tokenService.generateAccessToken(user);
 
     return ok(accessToken);
+  }
+
+  public async OAuthLogin(
+    provider: Exclude<AuthProvider, AuthProvider.LOCAL>,
+    data: {
+      id: string;
+      email: string;
+    },
+  ) {
+    let user = await this.userService.findOne({
+      socialAccounts: { providerAccountId: data.id, provider },
+    });
+
+    // If user not found. Register user with social account
+    if (!user) {
+      // Check is email already registered?
+      const isEmailExists = await this.userService.findOne({
+        email: data.email,
+      });
+
+      if (isEmailExists) {
+        return err(new ServiceException('USER_ALREADY_REGISTERED'));
+      }
+
+      // Generate random username with pattern email + random 3 digits
+      const username = `${data.email.split('@')[0]}${Math.floor(
+        Math.random() * 1000,
+      )}`;
+
+      const createdUser = await this.userService.create({
+        email: data.email,
+        username,
+        signUpMethod: provider,
+      });
+
+      if (createdUser.isErr()) {
+        return err(new ServiceException('UNKNOWN', createdUser.error.cause));
+      }
+
+      await this.socialAccountService.create({
+        provider,
+        providerAccountId: data.id,
+        user: createdUser.value,
+      });
+
+      user = createdUser.value;
+    }
+
+    // Generate access token
+    const refreshToken = await this.tokenService.generateRefreshToken(user);
+
+    // Generate refresh token
+    const acccessToken = await this.tokenService.generateAccessToken(user);
+
+    return ok({
+      user,
+      access: {
+        token: acccessToken.token,
+        expires: acccessToken.expires,
+      },
+      refresh: {
+        token: refreshToken.token,
+        expires: refreshToken.expires,
+      },
+    });
+  }
+
+  public async OAuthBind(
+    provider: Exclude<AuthProvider, AuthProvider.LOCAL>,
+    data: {
+      userId: string;
+      id: string;
+    },
+  ) {
+    const isAlreadyLinked = await this.socialAccountService.findOne({
+      providerAccountId: data.id,
+      provider,
+    });
+
+    if (isAlreadyLinked) {
+      return err(new ServiceException('SOCIAL_ACCOUNT_ALREADY_LINKED'));
+    }
+
+    const linked = await this.socialAccountService.create({
+      provider,
+      providerAccountId: data.id,
+      user: { id: data.userId },
+    });
+
+    if (linked.isErr()) {
+      return err(new ServiceException('UNKNOWN', linked.error.cause));
+    }
+
+    const updatedUser = await this.userService.findOne({ id: data.userId });
+
+    if (!updatedUser) {
+      return err(new ServiceException('USER_NOT_FOUND'));
+    }
+
+    return ok(updatedUser);
   }
 }

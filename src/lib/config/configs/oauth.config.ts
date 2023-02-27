@@ -9,7 +9,7 @@ export interface IOAuthConfig {
   googleClientSecret: string;
 }
 
-export default registerAs(ConfigName.KEY, (): IOAuthConfig => {
+export default registerAs(ConfigName.OAUTH, (): IOAuthConfig => {
   const config: JoiConfig<IOAuthConfig> = {
     googleClientId: {
       value: process.env.GOOGLE_CLIENT_ID,

@@ -58,7 +58,14 @@ export class AuthController {
           throw APIError.fromMessage(ApiErrorMessage.WRONG_EMAIL_USERNAME);
         case 'WRONG_PASSWORD':
           throw APIError.fromMessage(ApiErrorMessage.WRONG_PASSWORD);
+        case 'USER_PASSWORD_NOT_SET':
+          throw APIError.fromMessage(ApiErrorMessage.USER_PASSWORD_NOT_SET);
       }
+
+      throw APIError.fromMessage(
+        ApiErrorMessage.INTERNAL_SERVER_ERROR,
+        error.cause,
+      );
     }
 
     const loginData = result.value;

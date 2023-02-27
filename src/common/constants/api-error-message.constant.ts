@@ -52,6 +52,11 @@ export const ApiErrorMessage = {
     message: 'Wrong password',
     httpCode: HttpStatus.UNAUTHORIZED,
   },
+  OLD_PASSWORD_REQUIRED: {
+    code: 'OLD_PASSWORD_REQUIRED',
+    message: 'Old password is required',
+    httpCode: HttpStatus.BAD_REQUEST,
+  },
   WRONG_EMAIL_USERNAME: {
     code: 'WRONG_EMAIL_USERNAME',
     message: 'User not found with the given email or username',
@@ -65,6 +70,18 @@ export const ApiErrorMessage = {
   USER_NOT_VERIFIED: {
     code: 'USER_NOT_VERIFIED',
     message: 'User is not verified, please verify your email',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
+  USER_REGISTERED_WITH_ANOTHER_METHOD: {
+    code: 'USER_REGISTERED_WITH_ANOTHER_METHOD',
+    message:
+      'User is already registered with another method. You can link this account in your profile',
+    httpCode: HttpStatus.UNAUTHORIZED,
+  },
+  USER_PASSWORD_NOT_SET: {
+    code: 'USER_PASSWORD_NOT_SET',
+    message:
+      'User registered with another method, please login with that method. Set password in your profile, if you want to login with password',
     httpCode: HttpStatus.UNAUTHORIZED,
   },
   USERNAME_EXISTS: {
@@ -126,5 +143,41 @@ export const ApiErrorMessage = {
     code: 'OPERATION_FAILED',
     message: 'Operation failed',
     httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  OAUTH_INVALID_STATE: {
+    code: 'INVALID_STATE',
+    message: 'Invalid state',
+    httpCode: HttpStatus.BAD_REQUEST,
+  },
+  OAUTH_INVALID_CODE: {
+    code: 'INVALID_CODE',
+    message: 'Invalid code',
+    httpCode: HttpStatus.BAD_REQUEST,
+  },
+  OAUTH_INVALID_USER_DATA: {
+    code: 'INVALID_USER_DATA',
+    message: "Can't use this account to login",
+    httpCode: HttpStatus.BAD_REQUEST,
+  },
+  OAUTH_NO_CODE: {
+    code: 'NO_CODE',
+    message: 'No code provided',
+    httpCode: HttpStatus.BAD_REQUEST,
+  },
+  OAUTH_NO_TOKENS: {
+    code: 'NO_TOKEN',
+    message: 'No token provided',
+    httpCode: HttpStatus.BAD_REQUEST,
+  },
+  OAUTH_USER_ALREADY_REGISTERED: {
+    code: 'USER_ALREADY_REGISTERED',
+    message:
+      'User already registered with another method. You can link this account in your profile',
+    httpCode: HttpStatus.CONFLICT,
+  },
+  OAUTH_SOCIAL_ACCOUNT_ALREADY_LINKED: {
+    code: 'SOCIAL_ACCOUNT_ALREADY_LINKED',
+    message: 'Social account already linked',
+    httpCode: HttpStatus.CONFLICT,
   },
 } as const satisfies Record<string, IApiErrorMessage>;
