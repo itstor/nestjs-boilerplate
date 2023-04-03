@@ -1,5 +1,7 @@
 # NestJS Boilerplate (WIP)
 
+This project is still a work in progress. There may be major changes.
+
 ## Features
 
 This is a boilerplate project for NestJS. It includes the following:
